@@ -2,7 +2,7 @@
  * @license
  * 
  * The MIT License
- * Copyright (c) 2010-2011 Ibon Tolosana, Hyperandroid || http://labs.hyperandroid.com/
+ * Copyright (c) 2011 Jonas Wagner
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
  */
 
 CAAT.modules.initialization= CAAT.modules.initialization || {};
-
 
 CAAT.modules.initialization.init= function( width, height, runHere, imagesURL, onEndLoading )   {
 
@@ -97,6 +96,45 @@ CAAT.modules.initialization.init= function( width, height, runHere, imagesURL, o
     );
 };
 
+
+// Utility functions
+var PlUtility = {
+    // Generates exponentially distributed random variables.
+    expRandom: function(rate) {
+        return -Math.log(Math.random()) / rate;
+    },
+
+    // Generates normal-distributed random variables (with mean zero and
+    // standard deviation one).
+    normRandom: (function() {
+        var storedValue = null;
+
+        return function() {
+            // uses the marsaglia polar method:
+            // https://en.wikipedia.org/wiki/marsaglia_polar_method
+
+            // Use left-over value from previous pair, if there is one
+            if (storedValue !== null) {
+                var result = storedValue;
+                storedValue = null;
+                return result;
+            }
+
+            // No cache... construct two new random vars
+            do {
+                var x = Math.random() * 2.0 - 1.0;
+                var y = Math.random() * 2.0 - 1.0;
+                var s = x*x + y*y;
+            } while (s >= 1.0);
+            if (s == 0) return 0;
+            var factor = Math.sqrt(- 2.0 * Math.log(s) / s);
+            storedValue = x * factor;
+            return y * factor;
+        };
+    })(),
+};
+
+
 // Global Pukul Lalat object, keeping track of all our vars
 var pl = {};
 
@@ -131,29 +169,54 @@ var pl = {};
             scene.addChild(pl.leftArms[row]);
         }
 
-        pl.leftArms[0].setAlpha(0.9);
-        pl.activeLeftArm = 0;
-        pl.moskitoRow = 0;
-        pl.moskitoCol = 0;
-        pl.moskitos[0].setAlpha(0.9);
-        pl.moskitoMoved = 0;
         pl.totalTime = 0;
 
+        pl.leftArms[0].setAlpha(0.9);
+        pl.activeLeftArm = 0;
+
+        pl.activeMoskitos = new Array();
+        pl.moskitoDue = 3000;  // Let the first moskito arrive after 3 seconds
+
         director.onRenderStart = function(directorTime) {
+            //console.log("onRenderStart: ", directorTime, pl.totalTime);
             pl.totalTime += directorTime;
-            //alert("onRenderStart: " + directorTime);
-            while(pl.totalTime - pl.moskitoMoved > 1000) {
-                pl.moskitos[4*pl.moskitoRow + pl.moskitoCol].setAlpha(0.1);
-                pl.moskitoCol += 1;
-                if (pl.moskitoCol >= 4) {
-                    pl.moskitoCol = 0;
-                    pl.moskitoRow += 1;
-                    if (pl.moskitoRow >= 3) {
-                        pl.moskitoRow = 0;
+
+            // Add new moskito from time to time
+            while(pl.totalTime > pl.moskitoDue) {
+                pl.activeMoskitos.push( {row: Math.random()*3 >> 0, col:0, moved: pl.totalTime} );
+                console.log("Added a moskito:", pl.activeMoskitos[pl.activeMoskitos.length - 1]);
+
+                // Add a new fly after 3000 +- 700 milliseconds
+                pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
+            }
+
+            // Reset all moskito positions
+            for (var m = 0; m < 12; ++m) {
+                pl.moskitos[m].setAlpha(0.1);
+            }
+
+            // Move moskitos
+            // FIXME: make this slightly poisson as well? Just a bit random...?
+            move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+                var cur = pl.activeMoskitos[m];
+
+                while (pl.totalTime - cur.moved > 700) {
+                    cur.moved += 700;
+                    cur.col += 1;
+                    if (cur.col >= 4) {
+                        // For the moment, we just remove the moskito
+                        pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
+                        pl.activeMoskitos.pop();
+                        --m;
+                        continue move_moskitos_loop;
                     }
                 }
-                pl.moskitos[4*pl.moskitoRow + pl.moskitoCol].setAlpha(0.9);
-                pl.moskitoMoved += 1000;
+            }
+
+            // Draw the active moskitos
+            for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+                var cur = pl.activeMoskitos[m];
+                pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
             }
         }
     };
