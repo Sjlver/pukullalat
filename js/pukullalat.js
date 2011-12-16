@@ -24,78 +24,6 @@
  *
  */
 
-CAAT.modules.initialization= CAAT.modules.initialization || {};
-
-CAAT.modules.initialization.init= function( width, height, runHere, imagesURL, onEndLoading )   {
-
-    /**
-     * infere whether runhere is on a DIV, canvas, or none at all.
-     * If none at all, just append the created canvas to the document.
-     */
-    var isCanvas= false;
-    var canvascontainer= document.getElementById(runHere);
-
-    if ( canvascontainer ) {
-        if ( canvascontainer instanceof HTMLDivElement ) {
-            isCanvas= false;
-        } else if ( canvascontainer instanceof HTMLCanvasElement ) {
-            isCanvas= true;
-        } else {
-            canvascontainer= document.body;
-        }
-    } else {
-        canvascontainer= document.createElement('div');
-        document.body.appendChild(canvascontainer);
-    }
-    
-    /**
-     * create a director.
-     */
-    var director = new CAAT.Director().
-            initialize(
-                width||800,
-                height||600,
-                isCanvas?canvascontainer:undefined)
-            ;
-
-    if ( !isCanvas ) {
-        canvascontainer.appendChild( director.canvas );
-    }
-
-    /**
-     * Load splash images. It is supossed the splash has some images.
-     */
-    new CAAT.ImagePreloader().loadImages(
-        imagesURL,
-        function on_load( counter, images ) {
-
-            if ( counter==images.length ) {
-
-                director.emptyScenes();
-                director.setImagesCache(images);
-
-                onEndLoading(director);
-
-                /**
-                 * Change this sentence's parameters to play with different entering-scene
-                 * curtains.
-                 * just perform a director.setScene(0) to play first director's scene.
-                 */
-                director.easeIn(
-                        0,
-                        CAAT.Scene.prototype.EASE_SCALE,
-                        2000,
-                        false,
-                        CAAT.Actor.prototype.ANCHOR_CENTER,
-                        new CAAT.Interpolator().createElasticOutInterpolator(2.5, .4) );
-
-                CAAT.loop(60);
-
-            }
-        }
-    );
-};
-
 
 // Utility functions
 var PlUtility = {
@@ -136,147 +64,154 @@ var PlUtility = {
 
 
 // Global Pukul Lalat object, keeping track of all our vars
-var pl = {};
+var pl = {
+    WIDTH:  320,
+    HEIGHT: 240,
 
-(function() {
+};
 
-    /**
-     * This function will be called to let you define new scenes that will be
-     * shown after the splash screen.
-     * @param director
-     */
-    function createScenes(director) {
-        var scene = director.createScene();
+/**
+ * This function will be called to let you define new scenes that will be
+ * shown after the splash screen.
+ * @param director
+ */
+pl.createScenes = function(director) {
+    var scene = director.createScene();
 
-        pl.moskitos = Array();
-        for (var row = 0; row < 3; ++row) {
-            for (var col = 0; col < 4; ++col) {
-                pl.moskitos[4*row + col] = new CAAT.ShapeActor().
-                        setShape(CAAT.ShapeActor.prototype.SHAPE_CIRCLE).
-                        setBounds(10+col*50, 10+row*70, 30, 30).
-                        setFillStyle('#000').
-                        setAlpha(0.1);
-                scene.addChild(pl.moskitos[4*row + col]);
-            }
-        }
-        pl.leftArms = Array();
-        for (var row = 0; row < 3; ++row) {
-            pl.leftArms[row] = new CAAT.ShapeActor().
-                    setShape(CAAT.ShapeActor.prototype.SHAPE_RECTANGLE).
-                    setBounds(180, 5+row*70, 10, 40).
-                    setFillStyle('#050').
+    pl.moskitos = Array();
+    for (var row = 0; row < 3; ++row) {
+        for (var col = 0; col < 4; ++col) {
+            pl.moskitos[4*row + col] = new CAAT.ShapeActor().
+                    setShape(CAAT.ShapeActor.prototype.SHAPE_CIRCLE).
+                    setBounds(10+col*50, 10+row*70, 30, 30).
+                    setFillStyle('#000').
                     setAlpha(0.1);
-            scene.addChild(pl.leftArms[row]);
+            scene.addChild(pl.moskitos[4*row + col]);
+        }
+    }
+    pl.leftArms = Array();
+    for (var row = 0; row < 3; ++row) {
+        pl.leftArms[row] = new CAAT.ShapeActor().
+                setShape(CAAT.ShapeActor.prototype.SHAPE_RECTANGLE).
+                setBounds(180, 5+row*70, 10, 40).
+                setFillStyle('#050').
+                setAlpha(0.1);
+        scene.addChild(pl.leftArms[row]);
+    }
+    console.log('Created actors.');
+
+    pl.totalTime = 0;
+
+    pl.leftArms[0].setAlpha(0.9);
+    pl.leftArmPosition = 0;
+
+    pl.activeMoskitos = new Array();
+    pl.moskitoDue = 3000;  // Let the first moskito arrive after 3 seconds
+
+    pl.score = 0;
+    pl.totalMoskitos = 0;
+    pl.nLives = 3;
+
+    director.onRenderStart = function(directorTime) {
+        //console.log("onRenderStart: ", directorTime, pl.totalTime);
+        pl.totalTime += directorTime;
+
+        // Add new moskito from time to time
+        while(pl.totalTime > pl.moskitoDue) {
+            pl.activeMoskitos.push( {row: Math.random()*3 >> 0, col:0, moved: pl.totalTime} );
+            ++pl.totalMoskitos;
+            console.log("Added a moskito:", pl.activeMoskitos[pl.activeMoskitos.length - 1]);
+
+            // Add a new moskito after 3000 +- 700 milliseconds
+            pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
         }
 
-        pl.totalTime = 0;
+        // Reset all moskito positions
+        for (var m = 0; m < 12; ++m) {
+            pl.moskitos[m].setAlpha(0.1);
+        }
 
-        pl.leftArms[0].setAlpha(0.9);
-        pl.activeLeftArm = 0;
+        // Move moskitos
+        // FIXME: make this slightly poisson as well? Just a bit random...?
+        move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+            var cur = pl.activeMoskitos[m];
 
-        pl.activeMoskitos = new Array();
-        pl.moskitoDue = 3000;  // Let the first moskito arrive after 3 seconds
-
-        director.onRenderStart = function(directorTime) {
-            //console.log("onRenderStart: ", directorTime, pl.totalTime);
-            pl.totalTime += directorTime;
-
-            // Add new moskito from time to time
-            while(pl.totalTime > pl.moskitoDue) {
-                pl.activeMoskitos.push( {row: Math.random()*3 >> 0, col:0, moved: pl.totalTime} );
-                console.log("Added a moskito:", pl.activeMoskitos[pl.activeMoskitos.length - 1]);
-
-                // Add a new fly after 3000 +- 700 milliseconds
-                pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
-            }
-
-            // Reset all moskito positions
-            for (var m = 0; m < 12; ++m) {
-                pl.moskitos[m].setAlpha(0.1);
-            }
-
-            // Move moskitos
-            // FIXME: make this slightly poisson as well? Just a bit random...?
-            move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
-                var cur = pl.activeMoskitos[m];
-
-                while (pl.totalTime - cur.moved > 700) {
-                    cur.moved += 700;
-                    cur.col += 1;
-                    if (cur.col >= 4) {
-                        // For the moment, we just remove the moskito
-                        pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
-                        pl.activeMoskitos.pop();
-                        --m;
-                        continue move_moskitos_loop;
+            while (pl.totalTime - cur.moved > 700) {
+                cur.moved += 700;
+                cur.col += 1;
+                if (cur.col == 3) {
+                    // Is the moskito hit, or does it byte?
+                    if (pl.leftArmPosition == cur.row) {
+                        // Hit, moskito dies
+                        ++pl.score;
+                    } else {
+                        // Moskito bytes
+                        --pl.nLives;
                     }
+                } else if (cur.col >= 4) {
+                    // remove the moskito
+                    pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
+                    pl.activeMoskitos.pop();
+                    --m;
+                    continue move_moskitos_loop;
                 }
             }
+        }
 
-            // Draw the active moskitos
-            for (var m = 0; m < pl.activeMoskitos.length; ++m) {
-                var cur = pl.activeMoskitos[m];
-                pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
+        // Draw the active moskitos
+        for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+            var cur = pl.activeMoskitos[m];
+            pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
+        }
+
+        // Update page elements
+        $('#display_total_moskitos').html(pl.totalMoskitos);
+        $('#display_score').html(pl.score);
+        $('#display_n_lives').html(pl.nLives);
+    }
+};
+
+
+// CAAT initialization code
+$(document).ready(function() {
+    /**
+     * create a director.
+     */
+    var director = new CAAT.Director().initialize(
+        pl.WIDTH,
+        pl.HEIGHT
+    );
+    console.log("Initialized Director: ", director);
+    $('#the_canvas')[0].appendChild(director.canvas);
+    director.loop(60);
+    pl.createScenes(director);
+});
+
+
+// Keyboard handling
+$(document).ready(function() {
+    CAAT.registerKeyListener(function(key, action, modifiers, originalKeyEvent) {
+        //console.log("Key pressed: ", key, "action: ", action);
+        if (action != 'down') return;
+
+        if (key == 65) {
+            // 'A' key
+        } else if (key == 68) {
+            // 'D' key
+        } else if (key == 83) {
+            // 'S' key
+            if (pl.leftArmPosition < 2) {
+                pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
+                pl.leftArmPosition += 1;
+                pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
+            }
+        } else if (key == 87) {
+            // 'W' key
+            if (pl.leftArmPosition > 0) {
+                pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
+                pl.leftArmPosition -= 1;
+                pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
             }
         }
-    };
-
-    /**
-     * Start it all up when the document is ready.
-     * Change for your favorite frameworks initialization code.
-     */
-    window.addEventListener(
-            'load',
-            function() {
-                CAAT.modules.initialization.init(
-                    /* canvas will be 640x480 pixels */
-                        640, 480,
-
-                    /* and will be added to our canvas div. set an id of a canvas or div element */
-                        'the_canvas',
-
-                    /*
-                     load these images and set them up for non splash scenes.
-                     image elements must be of the form:
-                     {id:'<unique string id>',    url:'<url to image>'}
-
-                     No images can be set too.
-                     */
-                        [
-                        ],
-
-                     /*
-                        onEndSplash callback function.
-                        Create your scenes on this method.
-                      */
-                     createScenes
-
-                        );
-
-                CAAT.registerKeyListener(function(key, action, modifiers, originalKeyEvent) {
-                    //alert("Key pressed: " + key + "\naction = " + action);
-                    if (action != 'down') return;
-
-                    if (key == 65) {
-                        // 'A' key
-                    } else if (key == 68) {
-                        // 'D' key
-                    } else if (key == 83) {
-                        // 'S' key
-                        if (pl.activeLeftArm < 2) {
-                            pl.leftArms[pl.activeLeftArm].setAlpha(0.1);
-                            pl.activeLeftArm += 1;
-                            pl.leftArms[pl.activeLeftArm].setAlpha(0.9);
-                        }
-                    } else if (key == 87) {
-                        // 'W' key
-                        if (pl.activeLeftArm > 0) {
-                            pl.leftArms[pl.activeLeftArm].setAlpha(0.1);
-                            pl.activeLeftArm -= 1;
-                            pl.leftArms[pl.activeLeftArm].setAlpha(0.9);
-                        }
-                    }
-                });
-            },
-            false);
-})();
+    });
+});
