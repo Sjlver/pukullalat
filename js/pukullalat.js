@@ -25,6 +25,7 @@
  */
 
 
+// ***************************************************************************
 // Utility functions
 var PlUtility = {
     // Generates exponentially distributed random variables.
@@ -63,6 +64,7 @@ var PlUtility = {
 };
 
 
+// ***************************************************************************
 // Global Pukul Lalat object, keeping track of all our vars
 var pl = {
     WIDTH:  320,
@@ -112,66 +114,127 @@ pl.createScenes = function(director) {
     pl.totalMoskitos = 0;
     pl.nLives = 3;
 
-    director.onRenderStart = function(directorTime) {
-        //console.log("onRenderStart: ", directorTime, pl.totalTime);
-        pl.totalTime += directorTime;
+};
 
-        // Add new moskito from time to time
-        while(pl.totalTime > pl.moskitoDue) {
-            pl.activeMoskitos.push( {row: Math.random()*3 >> 0, col:0, moved: pl.totalTime} );
-            ++pl.totalMoskitos;
-            console.log("Added a moskito:", pl.activeMoskitos[pl.activeMoskitos.length - 1]);
+// Keyboard handling
+pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
+    //console.log("Key pressed: ", key, "action: ", action);
+    if (action != 'down') return;
 
-            // Add a new moskito after 3000 +- 700 milliseconds
-            pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
+    if (key == 65) {
+        // 'A' key
+    } else if (key == 68) {
+        // 'D' key
+    } else if (key == 83) {
+        // 'S' key
+        if (pl.leftArmPosition < 2) {
+            pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
+            pl.leftArmPosition += 1;
+            pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
         }
-
-        // Reset all moskito positions
-        for (var m = 0; m < 12; ++m) {
-            pl.moskitos[m].setAlpha(0.1);
+    } else if (key == 87) {
+        // 'W' key
+        if (pl.leftArmPosition > 0) {
+            pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
+            pl.leftArmPosition -= 1;
+            pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
         }
-
-        // Move moskitos
-        // FIXME: make this slightly poisson as well? Just a bit random...?
-        move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
-            var cur = pl.activeMoskitos[m];
-
-            while (pl.totalTime - cur.moved > 700) {
-                cur.moved += 700;
-                cur.col += 1;
-                if (cur.col == 3) {
-                    // Is the moskito hit, or does it byte?
-                    if (pl.leftArmPosition == cur.row) {
-                        // Hit, moskito dies
-                        ++pl.score;
-                    } else {
-                        // Moskito bytes
-                        --pl.nLives;
-                    }
-                } else if (cur.col >= 4) {
-                    // remove the moskito
-                    pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
-                    pl.activeMoskitos.pop();
-                    --m;
-                    continue move_moskitos_loop;
-                }
-            }
-        }
-
-        // Draw the active moskitos
-        for (var m = 0; m < pl.activeMoskitos.length; ++m) {
-            var cur = pl.activeMoskitos[m];
-            pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
-        }
-
-        // Update page elements
-        $('#display_total_moskitos').html(pl.totalMoskitos);
-        $('#display_score').html(pl.score);
-        $('#display_n_lives').html(pl.nLives);
     }
 };
 
+// Update game state
+pl.update = function(frameTime) {
+    //console.log("onRenderStart: ", frameTime, pl.totalTime);
+    pl.totalTime += frameTime;
 
+    // Add new moskito from time to time
+    while(pl.totalTime > pl.moskitoDue) {
+        pl.activeMoskitos.push( new Moskito() );
+        ++pl.totalMoskitos;
+
+        // Add a new moskito after 3000 +- 700 milliseconds
+        pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
+    }
+
+    // Reset all moskito positions
+    for (var m = 0; m < 12; ++m) {
+        pl.moskitos[m].setAlpha(0.1);
+    }
+
+    // Move moskitos
+    move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+        var cur = pl.activeMoskitos[m];
+        if (!cur.update()) {
+                // remove the moskito
+                pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
+                pl.activeMoskitos.pop();
+                --m;
+                continue move_moskitos_loop;
+        }
+    }
+
+    // Draw the active moskitos
+    for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+        var cur = pl.activeMoskitos[m];
+        pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
+    }
+
+    // Update page elements
+    $('#display_total_moskitos').html(pl.totalMoskitos);
+    $('#display_score').html(pl.score);
+    $('#display_n_lives').html(pl.nLives);
+}
+
+
+// ***************************************************************************
+// Moskitos
+const MoskitoState = {
+    ST_FLYING: 0,
+    ST_BITING: 1,
+    ST_DYING: 2,
+    ST_DEAD: 3,
+};
+Object.freeze(MoskitoState);
+
+Moskito = function() {
+    this.row = Math.random()*3 >> 0;
+    this.col = 0;
+    this.moved = pl.totalTime;
+    this.state = MoskitoState.ST_FLYING;
+    console.log("Created a moskito:", this);
+}
+
+Moskito.prototype = {
+    // Updates the position of this moskito
+    // Returns true if the moskito is still alive
+    update: function() {
+        // FIXME: make this slightly poisson as well? Just a bit random...?
+        while (pl.totalTime - this.moved > 700) {
+            this.moved += 700;
+            this.col += 1;
+            if (this.col == 3) {
+                // Is the moskito hit, or does it byte?
+                if (pl.leftArmPosition == this.row) {
+                    // Hit, moskito dies
+                    this.state = MoskitoState.ST_DYING;
+                    ++pl.score;
+                } else {
+                    // Moskito bytes
+                    this.state = MoskitoState.ST_BITING;
+                    --pl.nLives;
+                }
+            } else if (this.col >= 4) {
+                this.state = MoskitoState.ST_DEAD;
+                return false;
+            }
+        }
+        return true;
+    },
+};
+
+
+
+// ***************************************************************************
 // CAAT initialization code
 $(document).ready(function() {
     /**
@@ -185,33 +248,7 @@ $(document).ready(function() {
     $('#the_canvas')[0].appendChild(director.canvas);
     director.loop(60);
     pl.createScenes(director);
-});
 
-
-// Keyboard handling
-$(document).ready(function() {
-    CAAT.registerKeyListener(function(key, action, modifiers, originalKeyEvent) {
-        //console.log("Key pressed: ", key, "action: ", action);
-        if (action != 'down') return;
-
-        if (key == 65) {
-            // 'A' key
-        } else if (key == 68) {
-            // 'D' key
-        } else if (key == 83) {
-            // 'S' key
-            if (pl.leftArmPosition < 2) {
-                pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
-                pl.leftArmPosition += 1;
-                pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
-            }
-        } else if (key == 87) {
-            // 'W' key
-            if (pl.leftArmPosition > 0) {
-                pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
-                pl.leftArmPosition -= 1;
-                pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
-            }
-        }
-    });
+    director.onRenderStart = pl.update;
+    CAAT.registerKeyListener(pl.keyListener);
 });
