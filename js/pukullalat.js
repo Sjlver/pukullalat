@@ -67,9 +67,8 @@ var PlUtility = {
 // ***************************************************************************
 // Global Pukul Lalat object, keeping track of all our vars
 var pl = {
-    WIDTH:  320,
-    HEIGHT: 240,
-
+    WIDTH:  800,
+    HEIGHT: 482,
 };
 
 /**
@@ -84,34 +83,59 @@ pl.createLoadingScene = function(director) {
  * @param director
  */
 pl.createMainScene = function(director) {
-    var scene = director.createScene();
+    pl.mainScene = director.createScene();
+
+    // Helper function to create image actors
+    function createImageActor(id) {
+        return new CAAT.Actor().
+            setBackgroundImage(
+                new CAAT.SpriteImage().
+                    initialize(director.getImage(id), 1, 1 ).
+                    getRef(), true
+            ).
+            enableEvents(false);
+    }
+
+    // Load image actors
+    pl.mainActors = {};
+    var images = [
+        {id: 'pukullalat_handheld', x: 0, y: 0},
+        {id: 'panda_bear', x: 340, y: 200},
+        {id: 'panda_happy', x: 340, y: 200},
+        {id: 'panda_hmm', x: 340, y: 200},
+        {id: 'panda_left_arm_high', x: 340, y: 200},
+        {id: 'panda_left_arm_med', x: 340, y: 200},
+        {id: 'panda_left_arm_low', x: 340, y: 200},
+        {id: 'panda_right_arm_low', x: 340, y: 200},
+        {id: 'panda_right_arm_med', x: 340, y: 200},
+        {id: 'panda_right_arm_high', x: 340, y: 200},
+        {id: 'panda_look_center', x: 340, y: 200},
+        {id: 'panda_look_left', x: 340, y: 200},
+        {id: 'panda_look_right', x: 340, y: 200},
+        {id: 'panda_ouch', x: 340, y: 200},
+    ];
+    $(images).each(function(index, image) {
+        var actor = createImageActor(image.id).
+            setLocation(image.x, image.y);
+        pl.mainScene.addChild(actor);
+        pl.mainActors[image.id] = actor;
+    });
 
     pl.moskitos = Array();
     for (var row = 0; row < 3; ++row) {
         for (var col = 0; col < 4; ++col) {
             pl.moskitos[4*row + col] = new CAAT.ShapeActor().
                     setShape(CAAT.ShapeActor.prototype.SHAPE_CIRCLE).
-                    setBounds(10+col*50, 10+row*70, 30, 30).
+                    setBounds(220+col*30, 230+row*40, 20, 20).
                     setFillStyle('#000').
                     setAlpha(0.1);
-            scene.addChild(pl.moskitos[4*row + col]);
+            pl.mainScene.addChild(pl.moskitos[4*row + col]);
         }
     }
-    pl.leftArms = Array();
-    for (var row = 0; row < 3; ++row) {
-        pl.leftArms[row] = new CAAT.ShapeActor().
-                setShape(CAAT.ShapeActor.prototype.SHAPE_RECTANGLE).
-                setBounds(180, 5+row*70, 10, 40).
-                setFillStyle('#050').
-                setAlpha(0.1);
-        scene.addChild(pl.leftArms[row]);
-    }
+    pl.bear = new Bear();
     console.log('Created actors.');
 
     pl.totalTime = 0;
-
-    pl.leftArms[0].setAlpha(0.9);
-    pl.leftArmPosition = 0;
 
     pl.activeMoskitos = new Array();
     pl.moskitoDue = 3000;  // Let the first moskito arrive after 3 seconds
@@ -120,7 +144,7 @@ pl.createMainScene = function(director) {
     pl.totalMoskitos = 0;
     pl.nLives = 3;
 
-    scene.onRenderStart = pl.update;
+    pl.mainScene.onRenderStart = pl.update;
     console.log('Created main scene.');
 };
 
@@ -131,21 +155,20 @@ pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
 
     if (key == 65) {
         // 'A' key
+        pl.bear.activeSide = BearActiveSide.left;
     } else if (key == 68) {
         // 'D' key
+        pl.bear.activeSide = BearActiveSide.right;
+        // TODO: change height if child is too low.
     } else if (key == 83) {
         // 'S' key
-        if (pl.leftArmPosition < 2) {
-            pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
-            pl.leftArmPosition += 1;
-            pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
+        if (pl.bear.armPos < 2) {
+            pl.bear.armPos += 1;
         }
     } else if (key == 87) {
         // 'W' key
-        if (pl.leftArmPosition > 0) {
-            pl.leftArms[pl.leftArmPosition].setAlpha(0.1);
-            pl.leftArmPosition -= 1;
-            pl.leftArms[pl.leftArmPosition].setAlpha(0.9);
+        if (pl.bear.armPos > 0) {
+            pl.bear.armPos -= 1;
         }
     }
 };
@@ -164,11 +187,6 @@ pl.update = function(sceneTime) {
         pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
     }
 
-    // Reset all moskito positions
-    for (var m = 0; m < 12; ++m) {
-        pl.moskitos[m].setAlpha(0.1);
-    }
-
     // Move moskitos
     move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
         var cur = pl.activeMoskitos[m];
@@ -181,10 +199,53 @@ pl.update = function(sceneTime) {
         }
     }
 
-    // Draw the active moskitos
+    // Update the bear
+    pl.bear.update();
+
+    // Draw the moskitos
+    for (var m = 0; m < 12; ++m) {
+        pl.moskitos[m].setAlpha(0.1);
+    }
     for (var m = 0; m < pl.activeMoskitos.length; ++m) {
         var cur = pl.activeMoskitos[m];
         pl.moskitos[4*cur.row + cur.col].setAlpha(0.9);
+    }
+
+    // Draw the bear
+    pl.mainActors['panda_bear'].setAlpha(0.9);
+    for (var i in BearFaceState) {
+        if (pl.bear.faceState == BearFaceState[i]) {
+            pl.mainActors['panda_' + i].setAlpha(0.9);
+        } else {
+            pl.mainActors['panda_' + i].setAlpha(0.1);
+        }
+    }
+    $.each(['left', 'right'], function(i, direction) {
+        $.each(['high', 'med', 'low'], function(j, height) {
+            if (pl.bear.activeSide == BearActiveSide[direction] &&
+                pl.bear.armPos == BearArmPos[height]) {
+                pl.mainActors['panda_' + direction + '_arm_' + height].setAlpha(0.9);
+            } else {
+                pl.mainActors['panda_' + direction + '_arm_' + height].setAlpha(0.1);
+            }
+        });
+    });
+    pl.mainActors['panda_look_center'].setAlpha(
+        (pl.bear.faceState == BearFaceState.ouch) ? 0.9 : 0.1
+    );
+    if (pl.bear.faceState == BearFaceState.ouch) {
+        pl.mainActors['panda_look_center'].setAlpha(0.9);
+        pl.mainActors['panda_look_left'].setAlpha(0.1);
+        pl.mainActors['panda_look_right'].setAlpha(0.1);
+    } else {
+        pl.mainActors['panda_look_center'].setAlpha(0.1);
+        if (pl.bear.activeSide == BearActiveSide.left) {
+            pl.mainActors['panda_look_left'].setAlpha(0.9);
+            pl.mainActors['panda_look_right'].setAlpha(0.1);
+        } else {
+            pl.mainActors['panda_look_left'].setAlpha(0.1);
+            pl.mainActors['panda_look_right'].setAlpha(0.9);
+        }
     }
 
     // Update page elements
@@ -195,12 +256,57 @@ pl.update = function(sceneTime) {
 
 
 // ***************************************************************************
+// The bear
+const BearActiveSide = {
+    left: 0,
+    right: 1,
+};
+Object.freeze(BearActiveSide);
+const BearFaceState = {
+    happy: 0,
+    hmm: 1,
+    ouch: 2,
+};
+Object.freeze(BearFaceState);
+const BearArmPos = {
+    high: 0,
+    med: 1,
+    low: 2,
+};
+Object.freeze(BearArmPos);
+
+Bear = function() {
+    this.faceState = BearFaceState.happy;
+    this.activeSide = BearActiveSide.left;
+    this.armPos = BearArmPos.med;
+    console.log("Created a bear:", this);
+}
+
+Bear.prototype = {
+    // Updates the state of this bear, depending on the moskitos
+    // TODO: update depending on child position, too
+    update: function() {
+        var that = this;
+        that.faceState = BearFaceState.happy;
+        $.each(pl.activeMoskitos, function(i, m) {
+            if (m.col == 2 && (that.armPos != m.row || that.activeSide != BearActiveSide.left)) {
+                //console.log("Setting state to hmm: ", that, m);
+                that.faceState = BearFaceState.hmm;
+            } else if (m.state == MoskitoState.biting) {
+                //console.log("Setting state to ouch: ", that, m);
+                that.faceState = BearFaceState.ouch;
+            }
+        });
+    }
+};
+
+// ***************************************************************************
 // Moskitos
 const MoskitoState = {
-    ST_FLYING: 0,
-    ST_BITING: 1,
-    ST_DYING: 2,
-    ST_DEAD: 3,
+    flying: 0,
+    biting: 1,
+    dying: 2,
+    dead: 3,
 };
 Object.freeze(MoskitoState);
 
@@ -208,7 +314,7 @@ Moskito = function() {
     this.row = Math.random()*3 >> 0;
     this.col = 0;
     this.moved = pl.totalTime;
-    this.state = MoskitoState.ST_FLYING;
+    this.state = MoskitoState.flying;
     console.log("Created a moskito:", this);
 }
 
@@ -222,17 +328,17 @@ Moskito.prototype = {
             this.col += 1;
             if (this.col == 3) {
                 // Is the moskito hit, or does it byte?
-                if (pl.leftArmPosition == this.row) {
+                if (pl.bear.armPos == this.row && pl.bear.activeSide == BearActiveSide.left) {
                     // Hit, moskito dies
-                    this.state = MoskitoState.ST_DYING;
+                    this.state = MoskitoState.dying;
                     ++pl.score;
                 } else {
                     // Moskito bytes
-                    this.state = MoskitoState.ST_BITING;
+                    this.state = MoskitoState.biting;
                     --pl.nLives;
                 }
             } else if (this.col >= 4) {
-                this.state = MoskitoState.ST_DEAD;
+                this.state = MoskitoState.dead;
                 return false;
             }
         }
