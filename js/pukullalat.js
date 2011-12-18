@@ -73,11 +73,17 @@ var pl = {
 };
 
 /**
- * This function will be called to let you define new scenes that will be
- * shown after the splash screen.
+ * Creates a loading screen, that will be shown before the images are loaded.
+ */
+pl.createLoadingScene = function(director) {
+    //TODO
+}
+
+/**
+ * Creates the main scene, with the handheld, bear, moskitos, ...
  * @param director
  */
-pl.createScenes = function(director) {
+pl.createMainScene = function(director) {
     var scene = director.createScene();
 
     pl.moskitos = Array();
@@ -114,6 +120,8 @@ pl.createScenes = function(director) {
     pl.totalMoskitos = 0;
     pl.nLives = 3;
 
+    scene.onRenderStart = pl.update;
+    console.log('Created main scene.');
 };
 
 // Keyboard handling
@@ -143,9 +151,9 @@ pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
 };
 
 // Update game state
-pl.update = function(frameTime) {
-    //console.log("onRenderStart: ", frameTime, pl.totalTime);
-    pl.totalTime += frameTime;
+pl.update = function(sceneTime) {
+    //console.log("update: ", sceneTime);
+    pl.totalTime = sceneTime;
 
     // Add new moskito from time to time
     while(pl.totalTime > pl.moskitoDue) {
@@ -247,8 +255,33 @@ $(document).ready(function() {
     console.log("Initialized Director: ", director);
     $('#the_canvas')[0].appendChild(director.canvas);
     director.loop(60);
-    pl.createScenes(director);
+    pl.createLoadingScene(director);
 
-    director.onRenderStart = pl.update;
     CAAT.registerKeyListener(pl.keyListener);
+
+    new CAAT.ImagePreloader().loadImages(
+        [
+        {id:'pukullalat_handheld',  url:'../data/pukullalat_handheld.png'},
+        {id:'panda_bear',           url:'../data/panda_bear.png'},
+        {id:'panda_happy',          url:'../data/panda_happy.png'},
+        {id:'panda_hmm',            url:'../data/panda_hmm.png'},
+        {id:'panda_left_arm_high',  url:'../data/panda_left_arm_high.png'},
+        {id:'panda_left_arm_med',   url:'../data/panda_left_arm_med.png'},
+        {id:'panda_left_arm_low',   url:'../data/panda_left_arm_low.png'},
+        {id:'panda_right_arm_low',  url:'../data/panda_right_arm_low.png'},
+        {id:'panda_right_arm_med',  url:'../data/panda_right_arm_med.png'},
+        {id:'panda_right_arm_high', url:'../data/panda_right_arm_high.png'},
+        {id:'panda_look_center',    url:'../data/panda_look_center.png'},
+        {id:'panda_look_left',      url:'../data/panda_look_left.png'},
+        {id:'panda_look_right',     url:'../data/panda_look_right.png'},
+        {id:'panda_ouch',           url:'../data/panda_ouch.png'},
+        ],
+        function(counter, images) {
+            console.log("loaded images: ", counter, images);
+            director.setImagesCache(images);
+            if (counter == 14) {
+                pl.createMainScene(director);
+            }
+        }
+    );
 });

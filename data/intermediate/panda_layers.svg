@@ -16,9 +16,9 @@
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="panda_layers.svg"
    style="enable-background:new"
-   inkscape:export-filename="/home/jbw/privat/pukullalat/data/panda_look_right.png"
-   inkscape:export-xdpi="31.26"
-   inkscape:export-ydpi="31.26">
+   inkscape:export-filename="/home/jbw/privat/pukullalat/data/panda_left_arm_low.png"
+   inkscape:export-xdpi="21.49"
+   inkscape:export-ydpi="21.49">
   <defs
      id="defs4">
     <linearGradient
@@ -69,10 +69,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="416.77909"
+     inkscape:cx="223.03183"
      inkscape:cy="282.16774"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer5"
      showgrid="false"
      showborder="true"
      inkscape:window-width="1600"
@@ -919,7 +919,7 @@
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="Left Arm Down"
-     style="display:none">
+     style="display:inline">
     <path
        sodipodi:type="arc"
        style="color:#000000;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
@@ -1092,7 +1092,7 @@
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="Look right"
-     style="display:inline"
+     style="display:none"
      transform="translate(115.3925,-42.994247)">
     <g
        style="display:inline"
