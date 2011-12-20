@@ -69,6 +69,13 @@ var PlUtility = {
 var pl = {
     WIDTH:  800,
     HEIGHT: 482,
+
+    MOSKITO_SPAWN_INTERVAL: 3000,    // Moskitos spawn every 3 seconds
+    MOSKITO_SPAWN_STDEV: 700,        // Standard deviation of moskito spawn time
+    MOSKITO_SPAWN_INCREASES: 90000,  // Difficulty increases by 1 every 90 secs
+    MOSKITO_MOVE_INTERVAL: 700,      // Moskitos move every 700 seconds
+    MOSKITO_MOVE_STDEV: 100,         // Standard deviation of moskito move time
+    MOSKITO_MOVE_INCREASES: 200000,  // Difficulty increases by 1 every 200 seconds
 };
 
 /**
@@ -100,19 +107,23 @@ pl.createMainScene = function(director) {
     pl.mainActors = {};
     var images = [
         {id: 'pukullalat_handheld', x: 0, y: 0},
-        {id: 'panda_bear', x: 340, y: 200},
-        {id: 'panda_happy', x: 340, y: 200},
-        {id: 'panda_hmm', x: 340, y: 200},
-        {id: 'panda_left_arm_high', x: 340, y: 200},
-        {id: 'panda_left_arm_med', x: 340, y: 200},
-        {id: 'panda_left_arm_low', x: 340, y: 200},
-        {id: 'panda_right_arm_low', x: 340, y: 200},
-        {id: 'panda_right_arm_med', x: 340, y: 200},
-        {id: 'panda_right_arm_high', x: 340, y: 200},
-        {id: 'panda_look_center', x: 340, y: 200},
-        {id: 'panda_look_left', x: 340, y: 200},
-        {id: 'panda_look_right', x: 340, y: 200},
-        {id: 'panda_ouch', x: 340, y: 200},
+        {id: 'panda_bear', x: 320, y: 200},
+        {id: 'panda_happy', x: 320, y: 200},
+        {id: 'panda_hmm', x: 320, y: 200},
+        {id: 'panda_left_arm_high', x: 320, y: 200},
+        {id: 'panda_left_arm_med', x: 320, y: 200},
+        {id: 'panda_left_arm_low', x: 320, y: 200},
+        {id: 'panda_right_arm_low', x: 320, y: 195},
+        {id: 'panda_right_arm_med', x: 320, y: 190},
+        {id: 'panda_right_arm_high', x: 320, y: 180},
+        {id: 'panda_look_center', x: 320, y: 200},
+        {id: 'panda_look_left', x: 320, y: 200},
+        {id: 'panda_look_right', x: 320, y: 200},
+        {id: 'panda_ouch', x: 320, y: 200},
+        {id: 'panda_child1', x: 500, y: 150},
+        {id: 'panda_child2', x: 500, y: 190},
+        {id: 'panda_child3', x: 500, y: 230},
+        {id: 'panda_child4', x: 500, y: 300},
     ];
     $(images).each(function(index, image) {
         var actor = createImageActor(image.id).
@@ -135,7 +146,7 @@ pl.createMainScene = function(director) {
     pl.bear = new Bear();
     console.log('Created actors.');
 
-    pl.totalTime = 0;
+    pl.time = 0;
 
     pl.activeMoskitos = new Array();
     pl.moskitoDue = 3000;  // Let the first moskito arrive after 3 seconds
@@ -176,15 +187,15 @@ pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
 // Update game state
 pl.update = function(sceneTime) {
     //console.log("update: ", sceneTime);
-    pl.totalTime = sceneTime;
+    pl.time = sceneTime;
 
     // Add new moskito from time to time
-    while(pl.totalTime > pl.moskitoDue) {
+    while(pl.time > pl.moskitoDue) {
         pl.activeMoskitos.push( new Moskito() );
         ++pl.totalMoskitos;
 
-        // Add a new moskito after 3000 +- 700 milliseconds
-        pl.moskitoDue += 3000 + PlUtility.normRandom() * 700;
+        // Add a new moskito
+        pl.moskitoDue += Moskito.spawnInterval();
     }
 
     // Move moskitos
@@ -313,18 +324,25 @@ Object.freeze(MoskitoState);
 Moskito = function() {
     this.row = Math.random()*3 >> 0;
     this.col = 0;
-    this.moved = pl.totalTime;
+    this.moveDue = pl.time + this.moveInterval();
     this.state = MoskitoState.flying;
     console.log("Created a moskito:", this);
 }
 
 Moskito.prototype = {
+    // Computes the time to the next move, based on the current difficulty
+    moveInterval: function() {
+        // At the beginning of the game, this is pl.MOSKITO_MOVE_INTERVAL
+        // Each pl.MOSKITO_MOVE_INCREASES, it gets divided by one more
+        return (pl.MOSKITO_MOVE_INTERVAL + PlUtility.normRandom() * pl.MOSKITO_MOVE_STDEV) /
+            (pl.time + pl.MOSKITO_MOVE_INCREASES) * pl.MOSKITO_MOVE_INCREASES;
+    },
+
     // Updates the position of this moskito
     // Returns true if the moskito is still alive
     update: function() {
-        // FIXME: make this slightly poisson as well? Just a bit random...?
-        while (pl.totalTime - this.moved > 700) {
-            this.moved += 700;
+        while (pl.time > this.moveDue) {
+            this.moveDue += this.moveInterval();
             this.col += 1;
             if (this.col == 3) {
                 // Is the moskito hit, or does it byte?
@@ -344,6 +362,14 @@ Moskito.prototype = {
         }
         return true;
     },
+};
+
+// Computes the time to the next spawn, based on the current difficulty
+Moskito.spawnInterval = function() {
+    // At the beginning of the game, this is pl.MOSKITO_SPAWN_INTERVAL
+    // Each pl.MOSKITO_SPAWN_INCREASES, it gets divided by one more
+    return (pl.MOSKITO_SPAWN_INTERVAL + PlUtility.normRandom() * pl.MOSKITO_SPAWN_STDEV) /
+        (pl.time + pl.MOSKITO_SPAWN_INCREASES) * pl.MOSKITO_SPAWN_INCREASES;
 };
 
 
@@ -381,11 +407,15 @@ $(document).ready(function() {
         {id:'panda_look_left',      url:'../data/panda_look_left.png'},
         {id:'panda_look_right',     url:'../data/panda_look_right.png'},
         {id:'panda_ouch',           url:'../data/panda_ouch.png'},
+        {id:'panda_child1',         url:'../data/panda_child1.png'},
+        {id:'panda_child2',         url:'../data/panda_child2.png'},
+        {id:'panda_child3',         url:'../data/panda_child3.png'},
+        {id:'panda_child4',         url:'../data/panda_child4.png'},
         ],
         function(counter, images) {
             console.log("loaded images: ", counter, images);
             director.setImagesCache(images);
-            if (counter == 14) {
+            if (counter == 18) {
                 pl.createMainScene(director);
             }
         }
