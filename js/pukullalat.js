@@ -144,14 +144,17 @@ pl.createMainScene = function(director) {
         {id: 'moskito2', x: 32, y: 0, container: pl.moskitoActors},
         {id: 'moskito3', x: 64, y: 0, container: pl.moskitoActors},
         {id: 'moskito4', x: 96, y: 0, container: pl.moskitoActors},
+        {id: 'moskito4_crash', x: 92, y: -8, container: pl.moskitoActors},
         {id: 'moskito5', x: 0, y: 40, container: pl.moskitoActors},
         {id: 'moskito6', x: 28, y: 40, container: pl.moskitoActors},
         {id: 'moskito7', x: 56, y: 40, container: pl.moskitoActors},
         {id: 'moskito8', x: 84, y: 40, container: pl.moskitoActors},
+        {id: 'moskito8_crash', x: 74, y: 30, container: pl.moskitoActors},
         {id: 'moskito9', x: 0, y: 80, container: pl.moskitoActors},
         {id: 'moskito10', x: 25, y: 80, container: pl.moskitoActors},
         {id: 'moskito11', x: 50, y: 80, container: pl.moskitoActors},
         {id: 'moskito12', x: 75, y: 80, container: pl.moskitoActors},
+        {id: 'moskito12_crash', x: 65, y: 70, container: pl.moskitoActors},
     ];
     $(images).each(function(index, image) {
         var actor = createImageActor(image.id).
@@ -162,7 +165,7 @@ pl.createMainScene = function(director) {
 
     pl.bear = new Bear();
     pl.child = new BearChild();
-    console.log('Created actors.');
+    //console.log('Created actors.');
 
     pl.time = 0;
 
@@ -174,7 +177,7 @@ pl.createMainScene = function(director) {
     pl.nLifes = 3;
 
     pl.mainScene.onRenderStart = pl.update;
-    console.log('Created main scene.');
+    //console.log('Created main scene.');
 };
 
 // Keyboard handling
@@ -225,11 +228,11 @@ pl.update = function(sceneTime) {
     move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
         var cur = pl.activeMoskitos[m];
         if (!cur.update()) {
-                // remove the moskito
-                pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
-                pl.activeMoskitos.pop();
-                --m;
-                continue move_moskitos_loop;
+            // remove the moskito
+            pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
+            pl.activeMoskitos.pop();
+            --m;
+            continue move_moskitos_loop;
         }
     }
 
@@ -241,9 +244,15 @@ pl.update = function(sceneTime) {
     for (var m = 1; m <= 12; ++m) {
         pl.imageActors['moskito' + m].setAlpha(0.1);
     }
+    pl.imageActors['moskito4_crash'].setAlpha(0.1);
+    pl.imageActors['moskito8_crash'].setAlpha(0.1);
+    pl.imageActors['moskito12_crash'].setAlpha(0.1);
     for (var m = 0; m < pl.activeMoskitos.length; ++m) {
         var cur = pl.activeMoskitos[m];
         pl.imageActors['moskito' + (4*cur.row + cur.col + 1)].setAlpha(0.9);
+        if (cur.state == MoskitoState.dying) {
+            pl.imageActors['moskito' + (4*cur.row + 4) + '_crash'].setAlpha(0.9);
+        }
     }
 
     // Draw the bear
@@ -353,7 +362,7 @@ Bear = function() {
     this.faceState = BearFaceState.happy;
     this.activeSide = BearActiveSide.left;
     this.armPos = BearArmPos.med;
-    console.log("Created a bear:", this);
+    //console.log("Created a bear:", this);
 }
 
 Bear.prototype = {
@@ -417,7 +426,7 @@ BearChild = function() {
     this.lastMove = 0;
     this.moveDue = 0;
     this.nBaths = 0;
-    console.log("Created a bear child:", this);
+    //console.log("Created a bear child:", this);
 }
 
 BearChild.prototype = {
@@ -442,7 +451,7 @@ BearChild.prototype = {
             this.active = true;
             this.lastMove = pl.time;
             this.moveDue = pl.time + this.moveInterval();
-            console.log("Activated the bear child: ", this);
+            //console.log("Activated the bear child: ", this);
         }
 
         if (this.active) {
@@ -494,7 +503,7 @@ Moskito = function() {
     this.col = 0;
     this.moveDue = pl.time + this.moveInterval();
     this.state = MoskitoState.flying;
-    console.log("Created a moskito:", this);
+    //console.log("Created a moskito:", this);
 }
 
 Moskito.prototype = {
@@ -556,7 +565,7 @@ $(document).ready(function() {
         pl.WIDTH,
         pl.HEIGHT
     );
-    console.log("Initialized Director: ", pl.director);
+    //console.log("Initialized Director: ", pl.director);
     $('#the_canvas')[0].appendChild(pl.director.canvas);
     pl.director.loop(60);
     pl.createLoadingScene(pl.director);
@@ -587,19 +596,22 @@ $(document).ready(function() {
         {id:'moskito2',             url:'../data/moskito2.png'},
         {id:'moskito3',             url:'../data/moskito3.png'},
         {id:'moskito4',             url:'../data/moskito4.png'},
+        {id:'moskito4_crash',       url:'../data/moskito4_crash.png'},
         {id:'moskito5',             url:'../data/moskito5.png'},
         {id:'moskito6',             url:'../data/moskito6.png'},
         {id:'moskito7',             url:'../data/moskito7.png'},
         {id:'moskito8',             url:'../data/moskito8.png'},
+        {id:'moskito8_crash',       url:'../data/moskito8_crash.png'},
         {id:'moskito9',             url:'../data/moskito9.png'},
         {id:'moskito10',            url:'../data/moskito10.png'},
         {id:'moskito11',            url:'../data/moskito11.png'},
         {id:'moskito12',            url:'../data/moskito12.png'},
+        {id:'moskito12_crash',      url:'../data/moskito12_crash.png'},
         ],
         function(counter, images) {
-            console.log("loaded images: ", counter, images);
+            //console.log("loaded images: ", counter, images);
             pl.director.setImagesCache(images);
-            if (counter == 30) {
+            if (counter == 33) {
                 pl.createMainScene(pl.director);
             }
         }

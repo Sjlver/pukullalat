@@ -17,7 +17,7 @@
    inkscape:version="0.48.1 r9760"
    enable-background="new"
    sodipodi:docname="moskito4.svg"
-   inkscape:export-filename="/home/jbw/privat/pukullalat/data/intermediate/moskito4.png"
+   inkscape:export-filename="/home/jbw/privat/pukullalat/data/intermediate/moskito4_crash.png"
    inkscape:export-xdpi="269.34"
    inkscape:export-ydpi="269.34">
   <defs
@@ -49,10 +49,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="12.12"
-     inkscape:cx="10.404485"
-     inkscape:cy="25.106552"
+     inkscape:cx="9.6845401"
+     inkscape:cy="25.194954"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer3"
      showgrid="false"
      inkscape:window-width="1600"
      inkscape:window-height="842"
@@ -91,7 +91,7 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Moskito"
-     style="opacity:1;display:inline;filter:url(#filter3868)">
+     style="display:none;filter:url(#filter3868)">
     <path
        sodipodi:nodetypes="sssss"
        inkscape:connector-curvature="0"
@@ -202,5 +202,19 @@
        id="path3816-88"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccc" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Crash">
+    <path
+       transform="translate(24.834983,15.759076)"
+       style="opacity:1;display:inline;filter:url(#filter3868);color:#000000;fill:none;stroke:#000000;stroke-width:1.19999999999999996;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0;marker:none;visibility:visible;overflow:visible;enable-background:accumulate;stroke-dasharray:none"
+       inkscape:transform-center-x="1.557588"
+       inkscape:transform-center-y="-0.84531799"
+       d="m 17.677895,23.741624 -8.4448138,0.388369 -2.7517736,5.536662 -8.6467865,-7.378736 -3.4595143,9.699082 -1.8438759,-10.595949 -13.3804759,1.207143 5.09389,-11.727317 -8.444948,1.843994 6.038373,-10.4673201 -3.348521,-8.0609584 6.294496,-3.4961192 -1.09891,-6.5315653 13.0560364,8.768926 3.29316536,-8.496263 5.79301214,7.1962378 6.2299781,-6.5768608 2.123398,14.11078671 9.611911,-2.26533251 -7.94182,9.781397 6.779309,5.3241328 -6.459172,2.780734 z"
+       id="path3003"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccccccccccccccccc" />
   </g>
 </svg>
