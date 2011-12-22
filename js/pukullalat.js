@@ -113,10 +113,12 @@ pl.createMainScene = function(director) {
     // Load image actors
     pl.imageActors = {};
     pl.handheldActors = new CAAT.ActorContainer();
+    pl.hudActors = new CAAT.ActorContainer();
     pl.bearActors = new CAAT.ActorContainer().setBounds(320, 200, 220, 154);
     pl.childActors = new CAAT.ActorContainer();
     pl.moskitoActors = new CAAT.ActorContainer().setBounds(220, 230, 160, 160);
     pl.mainScene.addChild(pl.handheldActors);
+    pl.mainScene.addChild(pl.hudActors);
     pl.mainScene.addChild(pl.bearActors);
     pl.mainScene.addChild(pl.childActors);
     pl.mainScene.addChild(pl.moskitoActors);
@@ -155,6 +157,9 @@ pl.createMainScene = function(director) {
         {id: 'moskito11', x: 50, y: 80, container: pl.moskitoActors},
         {id: 'moskito12', x: 75, y: 80, container: pl.moskitoActors},
         {id: 'moskito12_crash', x: 65, y: 70, container: pl.moskitoActors},
+        {id: 'health_bar1', x: 225, y: 135, container: pl.hudActors},
+        {id: 'health_bar2', x: 225, y: 135, container: pl.hudActors},
+        {id: 'health_bar3', x: 225, y: 135, container: pl.hudActors},
     ];
     $(images).each(function(index, image) {
         var actor = createImageActor(image.id).
@@ -239,6 +244,15 @@ pl.update = function(sceneTime) {
     pl.bear.update();
     pl.child.update();
 
+    // Draw the heads-up display
+    for (var i = 1; i <= 3; ++i) {
+        if (pl.nLifes == i) {
+            pl.imageActors['health_bar' + i].setAlpha(0.9);
+        } else {
+            pl.imageActors['health_bar' + i].setAlpha(0.0);
+        }
+    }
+
     // Draw the moskitos
     for (var m = 1; m <= 12; ++m) {
         pl.imageActors['moskito' + m].setAlpha(0.1);
@@ -318,6 +332,10 @@ pl.update = function(sceneTime) {
 
 pl.loseLife = function() {
     --pl.nLifes;
+    if (pl.nLifes <= 0) {
+        alert("Game over: score is " + pl.score);
+        location.reload();
+    }
     //console.log("Losing a live...");
     var shake = new CAAT.ScaleBehavior().
         setFrameTime(pl.time, 500).
@@ -607,11 +625,14 @@ $(document).ready(function() {
         {id:'moskito11',            url:'data/moskito11.png'},
         {id:'moskito12',            url:'data/moskito12.png'},
         {id:'moskito12_crash',      url:'data/moskito12_crash.png'},
+        {id:'health_bar1',          url:'data/health_bar1.png'},
+        {id:'health_bar2',          url:'data/health_bar2.png'},
+        {id:'health_bar3',          url:'data/health_bar3.png'},
         ],
         function(counter, images) {
             //console.log("loaded images: ", counter, images);
             pl.director.setImagesCache(images);
-            if (counter == 33) {
+            if (counter == 36) {
                 pl.createMainScene(pl.director);
             }
         }
