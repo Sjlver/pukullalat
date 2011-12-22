@@ -168,6 +168,11 @@ pl.createMainScene = function(director) {
         pl.imageActors[image.id] = actor;
     });
 
+    pl.scoreActor = new CAAT.TextActor().
+        setFont("20px DigitaldreamFatSkewRegular").
+        setLocation(410, 145);
+    pl.hudActors.addChild(pl.scoreActor);
+
     pl.bear = new Bear();
     pl.child = new BearChild();
     //console.log('Created actors.');
@@ -328,6 +333,9 @@ pl.update = function(sceneTime) {
     $('#display_total_moskitos').html(pl.totalMoskitos);
     $('#display_score').html(pl.score);
     $('#display_n_lifes').html(pl.nLifes);
+    pl.scoreActor.setText(
+        sprintf("%05d", pl.score)
+    );
 };
 
 pl.loseLife = function() {
