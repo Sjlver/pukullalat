@@ -89,7 +89,27 @@ var pl = {
  * Creates a loading screen, that will be shown before the images are loaded.
  */
 pl.createLoadingScene = function(director) {
-    //TODO
+    pl.loadingScene = director.createScene();
+    pl.loadingActors = {};
+    pl.loadingActors.borderActor = new CAAT.Actor().
+        setLocation((pl.WIDTH - 200) / 2.0, (pl.HEIGHT - 30) / 2.0).
+        setSize(200, 30).
+        setFillStyle('#fff').
+        setStrokeStyle('#000').
+        enableEvents(false);
+    pl.loadingScene.addChild(pl.loadingActors.borderActor);
+    pl.loadingActors.progressbarActor = new CAAT.Actor().
+        setLocation((pl.WIDTH - 200) / 2.0 + 6, (pl.HEIGHT - 30) / 2.0 + 6).
+        setSize(10, 18).
+        setFillStyle('#000').
+        enableEvents(false);
+    pl.loadingScene.addChild(pl.loadingActors.progressbarActor);
+    pl.loadingTextActor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("Loading...").
+        setLocation(pl.WIDTH / 2.0 - 75, pl.HEIGHT / 2.0 - 60);
+    pl.loadingScene.addChild(pl.loadingTextActor);
+    console.log("Loading scene created.");
 };
 
 /**
@@ -169,7 +189,7 @@ pl.createMainScene = function(director) {
     });
 
     pl.scoreActor = new CAAT.TextActor().
-        setFont("20px DigitaldreamFatSkewRegular").
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setLocation(410, 145);
     pl.hudActors.addChild(pl.scoreActor);
 
@@ -640,8 +660,13 @@ $(document).ready(function() {
         function(counter, images) {
             //console.log("loaded images: ", counter, images);
             pl.director.setImagesCache(images);
+            pl.loadingActors.progressbarActor.setSize(10 + 178 * counter / 36.0, 18);
             if (counter == 36) {
-                pl.createMainScene(pl.director);
+                //setTimeout(function() {
+                    pl.createMainScene(pl.director);
+                    console.log("Main scene created.");
+                    pl.director.switchToNextScene(2000, true, false);
+                //}, 3000);
             }
         }
     );
