@@ -343,19 +343,19 @@ pl.loseLife = function() {
     left: 0,
     right: 1,
 };
-Object.freeze(BearActiveSide);
+/* Object.freeze(BearActiveSide); */
 /* const */ BearFaceState = {
     happy: 0,
     hmm: 1,
     ouch: 2,
 };
-Object.freeze(BearFaceState);
+/* Object.freeze(BearFaceState); */
 /* const */ BearArmPos = {
     high: 0,
     med: 1,
     low: 2,
 };
-Object.freeze(BearArmPos);
+/* Object.freeze(BearArmPos); */
 
 Bear = function() {
     this.faceState = BearFaceState.happy;
@@ -417,7 +417,7 @@ Bear.prototype = {
     low: 3,
     water: 4,
 };
-Object.freeze(BearChildPos);
+/* Object.freeze(BearChildPos); */
 
 BearChild = function() {
     this.position = BearChildPos.high;
@@ -496,7 +496,7 @@ BearChild.prototype = {
     dying: 2,
     dead: 3,
 };
-Object.freeze(MoskitoState);
+/* Object.freeze(MoskitoState); */
 
 Moskito = function() {
     this.row = Math.random()*3 >> 0;
