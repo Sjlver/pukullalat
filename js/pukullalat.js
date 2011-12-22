@@ -61,6 +61,37 @@ var PlUtility = {
             return y * factor;
         };
     })(),
+
+    // Makes an arbitrary actor blink
+    addBlinkBehavior: function(actor, period) {
+        period = ((typeof(period) != 'undefined') ? period : 300);
+
+        var blinkOn = function() {
+            actor.setVisible(true);
+            actor.blinkBehaviorTimeout = setTimeout(blinkOff, period);
+        }
+        var blinkOff = function() {
+            actor.setVisible(false);
+            actor.blinkBehaviorTimeout = setTimeout(blinkOn, period);
+        }
+        var expirationListener = {
+            actorLifeCycleEvent: function(actor, event_type, time) {
+                if (event_type==='expired') {
+                    PlUtility.removeBlinkBehavior(actor);
+                }
+            }
+        };
+
+        actor.addListener(expirationListener);
+        blinkOn();
+    },
+
+    // Stops blinking again (use after addBlinkBehavior)
+    removeBlinkBehavior: function(actor) {
+        clearTimeout(actor.blinkBehaviorTimeout);
+        delete actor.blinkBehaviorTimeout;
+        actor.setVisible(true);
+    },
 };
 
 
@@ -112,36 +143,21 @@ pl.createLoadingScene = function(director) {
     console.log("Loading scene created.");
 };
 
-/**
- * Creates the main scene, with the handheld, bear, moskitos, ...
- * @param director
- */
-pl.createMainScene = function(director) {
-    pl.mainScene = director.createScene();
-
-    // Helper function to create image actors
-    function createImageActor(id) {
-        return new CAAT.Actor().
-            setBackgroundImage(
-                new CAAT.SpriteImage().
-                    initialize(director.getImage(id), 1, 1 ).
-                    getRef(), true
-            ).
-            enableEvents(false);
-    }
-
+/* Creates all the image actors; they are used in several scenes. */
+pl.createActors = function() {
     // Load image actors
     pl.imageActors = {};
     pl.handheldActors = new CAAT.ActorContainer();
-    pl.hudActors = new CAAT.ActorContainer();
-    pl.bearActors = new CAAT.ActorContainer().setBounds(320, 200, 220, 154);
-    pl.childActors = new CAAT.ActorContainer();
-    pl.moskitoActors = new CAAT.ActorContainer().setBounds(220, 230, 160, 160);
-    pl.mainScene.addChild(pl.handheldActors);
-    pl.mainScene.addChild(pl.hudActors);
-    pl.mainScene.addChild(pl.bearActors);
-    pl.mainScene.addChild(pl.childActors);
-    pl.mainScene.addChild(pl.moskitoActors);
+    pl.hudActors = new CAAT.ActorContainer().
+        enableEvents(false);
+    pl.bearActors = new CAAT.ActorContainer().
+        setBounds(320, 200, 220, 154).
+        enableEvents(false);
+    pl.childActors = new CAAT.ActorContainer().
+        enableEvents(false);
+    pl.moskitoActors = new CAAT.ActorContainer().
+        setBounds(220, 230, 160, 160).
+        enableEvents(false);
 
     var images = [
         {id: 'pukullalat_handheld', x: 0, y: 0, container: pl.handheldActors},
@@ -182,7 +198,13 @@ pl.createMainScene = function(director) {
         {id: 'health_bar3', x: 225, y: 135, container: pl.hudActors},
     ];
     $(images).each(function(index, image) {
-        var actor = createImageActor(image.id).
+        var actor = new CAAT.Actor().
+            setBackgroundImage(
+                new CAAT.SpriteImage().
+                    initialize(pl.director.getImage(image.id), 1, 1 ).
+                    getRef(), true
+            ).
+            enableEvents(false).
             setLocation(image.x, image.y);
         image.container.addChild(actor);
         pl.imageActors[image.id] = actor;
@@ -193,10 +215,30 @@ pl.createMainScene = function(director) {
         setLocation(410, 145);
     pl.hudActors.addChild(pl.scoreActor);
 
-    pl.bear = new Bear();
-    pl.child = new BearChild();
-    //console.log('Created actors.');
+    console.log('Created actors.');
 
+};
+
+/**
+ * Creates the main scene, with the handheld, bear, moskitos, ...
+ * @param director
+ */
+pl.createMainScene = function(director) {
+    pl.mainScene = director.createScene();
+
+    pl.mainScene.addChild(pl.handheldActors);
+    pl.mainScene.addChild(pl.hudActors);
+    pl.mainScene.addChild(pl.bearActors);
+    pl.mainScene.addChild(pl.childActors);
+    pl.mainScene.addChild(pl.moskitoActors);
+
+    pl.mainScene.onRenderStart = pl.update;
+    pl.mainScene.activated = pl.initNewGame;
+    console.log('Created main scene.');
+};
+
+/* Initializes a new game */
+pl.initNewGame = function() {
     pl.time = 0;
 
     pl.activeMoskitos = [];
@@ -204,14 +246,53 @@ pl.createMainScene = function(director) {
 
     pl.score = 0;
     pl.totalMoskitos = 0;
-    pl.nLifes = 3;
+    pl.nLives = 3;
 
-    pl.mainScene.onRenderStart = pl.update;
-    //console.log('Created main scene.');
+    pl.bear = new Bear();
+    pl.child = new BearChild();
 };
 
-// Keyboard handling
-pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
+/**
+ * Creates the game over scene
+ * @param director
+ */
+pl.createGameOverScene = function(director) {
+    pl.gameOverScene = director.createScene();
+
+    pl.mainScene.removeChild(pl.handheldActors);
+    pl.gameOverScene.addChild(pl.handheldActors);
+    pl.mainScene.removeChild(pl.hudActors);
+    pl.gameOverScene.addChild(pl.hudActors);
+
+    pl.gameOverText1Actor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("Game over...").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 - 20);
+    pl.gameOverScene.addChild(pl.gameOverText1Actor);
+    pl.gameOverText2Actor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("Your name:").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 30);
+    pl.gameOverScene.addChild(pl.gameOverText2Actor);
+    pl.playerNameTextActor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("___").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 60);
+    pl.gameOverScene.addChild(pl.playerNameTextActor);
+    pl.cursorTextActor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("_  ").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 65);
+    PlUtility.addBlinkBehavior(pl.cursorTextActor);
+    pl.gameOverScene.addChild(pl.cursorTextActor);
+
+    console.log('Created game over scene.');
+};
+
+// Keyboard handling in the main scene
+pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
+    if (!pl.mainScene || pl.mainScene.expired) return;
+
     //console.log("Key pressed: ", key, "action: ", action);
     if (action != 'down') return;
 
@@ -237,6 +318,34 @@ pl.keyListener = function(key, action, modifiers, originalKeyEvent) {
         if (pl.bear.activeSide == BearActiveSide.right) {
             pl.bear.pushChild();
         }
+    }
+};
+
+// Keyboard handling in the game over scene
+pl.gameOverKeyListener = function(key, action, modifiers, originalKeyEvent) {
+    if (!pl.gameOverScene || pl.gameOverScene.expired) return;
+
+    //console.log("Key pressed: ", key, "action: ", action);
+    if (action != 'down') return;
+
+    if (key >= 65 && key <= 90) {
+        var letter = String.fromCharCode(key);
+        var index = pl.cursorTextActor.text.indexOf('_');
+        pl.playerNameTextActor.setText(
+            pl.playerNameTextActor.text.substring(0, index) +
+            letter +
+            pl.playerNameTextActor.text.substring(index + 1)
+        );
+        if (pl.cursorTextActor.text == '  _') {
+            pl.cursorTextActor.setText('_  ');
+        } else {
+            pl.cursorTextActor.setText(
+                ' ' + pl.cursorTextActor.text.substring(0, 2)
+            );
+        }
+    } else if (key == 10 || key == 13) {
+        alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
+        location.reload();
     }
 };
 
@@ -271,7 +380,7 @@ pl.update = function(sceneTime) {
 
     // Draw the heads-up display
     for (var i = 1; i <= 3; ++i) {
-        if (pl.nLifes == i) {
+        if (pl.nLives == i) {
             pl.imageActors['health_bar' + i].setAlpha(0.9);
         } else {
             pl.imageActors['health_bar' + i].setAlpha(0.0);
@@ -350,20 +459,19 @@ pl.update = function(sceneTime) {
     }
 
     // Update page elements
-    $('#display_total_moskitos').html(pl.totalMoskitos);
-    $('#display_score').html(pl.score);
-    $('#display_n_lifes').html(pl.nLifes);
     pl.scoreActor.setText(
         sprintf("%05d", pl.score)
     );
 };
 
 pl.loseLife = function() {
-    --pl.nLifes;
-    if (pl.nLifes <= 0) {
-        alert("Game over: score is " + pl.score);
-        location.reload();
+    --pl.nLives;
+    if (pl.nLives <= 0) {
+        pl.createGameOverScene(pl.director);
+        pl.director.switchToNextScene(2000, true, false);
+        return;
     }
+
     //console.log("Losing a live...");
     var shake = new CAAT.ScaleBehavior().
         setFrameTime(pl.time, 500).
@@ -616,7 +724,8 @@ $(document).ready(function() {
     pl.director.loop(60);
     pl.createLoadingScene(pl.director);
 
-    CAAT.registerKeyListener(pl.keyListener);
+    CAAT.registerKeyListener(pl.mainKeyListener);
+    CAAT.registerKeyListener(pl.gameOverKeyListener);
 
     new CAAT.ImagePreloader().loadImages(
         [
@@ -663,9 +772,12 @@ $(document).ready(function() {
             pl.loadingActors.progressbarActor.setSize(10 + 178 * counter / 36.0, 18);
             if (counter == 36) {
                 //setTimeout(function() {
+                    pl.createActors();
                     pl.createMainScene(pl.director);
                     console.log("Main scene created.");
                     pl.director.switchToNextScene(2000, true, false);
+                    //pl.createGameOverScene(pl.director);
+                    //pl.director.switchToNextScene(2000, true, false);
                 //}, 3000);
             }
         }

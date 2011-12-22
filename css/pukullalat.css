@@ -15,8 +15,20 @@
     font-style: normal;
 }
 
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
 h1, h2, h3 {
     font-family: "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive;
     font-weight: normal;
     font-style: normal;
+}
+
+div#the_canvas {
+    width: 800px;
+    height: 482px;
+    margin-left: auto;
+    margin-right: auto;
 }
