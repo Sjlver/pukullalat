@@ -294,23 +294,33 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
     if (!pl.mainScene || pl.mainScene.expired) return;
 
     //console.log("Key pressed: ", key, "action: ", action);
+
+    // Prevent scrolling for arrow keys
+    if (37 <= key && key <= 40) {
+        if (originalKeyEvent.preventDefault) {
+            originalKeyEvent.preventDefault();
+        } else {
+            originalKeyEvent.returnValue = false;
+        }
+    }
+
     if (action != 'down') return;
 
-    if (key == 65) {
+    if (key == 65 || key == 37) {
         // 'A' key
         pl.bear.activeSide = BearActiveSide.left;
-    } else if (key == 68) {
+    } else if (key == 68 || key == 39) {
         // 'D' key
         if (pl.child.position != BearChildPos.water) {
             pl.bear.activeSide = BearActiveSide.right;
             pl.bear.holdChild();
         }
-    } else if (key == 83) {
+    } else if (key == 83 || key == 40) {
         // 'S' key
         if (pl.bear.armPos < 2) {
             pl.bear.armPos += 1;
         }
-    } else if (key == 87) {
+    } else if (key == 87 || key == 38) {
         // 'W' key
         if (pl.bear.armPos > 0) {
             pl.bear.armPos -= 1;
@@ -325,7 +335,7 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
 pl.gameOverKeyListener = function(key, action, modifiers, originalKeyEvent) {
     if (!pl.gameOverScene || pl.gameOverScene.expired) return;
 
-    //console.log("Key pressed: ", key, "action: ", action);
+    console.log("Key pressed: ", key, "action: ", action);
     if (action != 'down') return;
 
     if (key >= 65 && key <= 90) {
@@ -343,9 +353,19 @@ pl.gameOverKeyListener = function(key, action, modifiers, originalKeyEvent) {
                 ' ' + pl.cursorTextActor.text.substring(0, 2)
             );
         }
+    } else if (key == 8) {
+        // Backspace key
+        if (pl.cursorTextActor.text != '_  ') {
+            pl.cursorTextActor.setText(
+                pl.cursorTextActor.text.substring(1, 2) + ' '
+            );
+        }
     } else if (key == 10 || key == 13) {
-        alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
-        location.reload();
+        // Enter key
+        if (pl.playerNameTextActor.text.indexOf('_') < 0) {
+            alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
+            location.reload();
+        }
     }
 };
 
