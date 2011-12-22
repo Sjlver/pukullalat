@@ -339,18 +339,18 @@ pl.loseLife = function() {
 
 // ***************************************************************************
 // The bear
-const BearActiveSide = {
+/* const */ BearActiveSide = {
     left: 0,
     right: 1,
 };
 Object.freeze(BearActiveSide);
-const BearFaceState = {
+/* const */ BearFaceState = {
     happy: 0,
     hmm: 1,
     ouch: 2,
 };
 Object.freeze(BearFaceState);
-const BearArmPos = {
+/* const */ BearArmPos = {
     high: 0,
     med: 1,
     low: 2,
@@ -411,7 +411,7 @@ Bear.prototype = {
 
 // ***************************************************************************
 // The bear child
-const BearChildPos = {
+/* const */ BearChildPos = {
     high: 1,
     med: 2,
     low: 3,
@@ -490,7 +490,7 @@ BearChild.prototype = {
 
 // ***************************************************************************
 // Moskitos
-const MoskitoState = {
+/* const */ MoskitoState = {
     flying: 0,
     biting: 1,
     dying: 2,
