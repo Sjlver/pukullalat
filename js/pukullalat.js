@@ -90,7 +90,7 @@ var pl = {
  */
 pl.createLoadingScene = function(director) {
     //TODO
-}
+};
 
 /**
  * Creates the main scene, with the handheld, bear, moskitos, ...
@@ -314,7 +314,7 @@ pl.update = function(sceneTime) {
     $('#display_total_moskitos').html(pl.totalMoskitos);
     $('#display_score').html(pl.score);
     $('#display_n_lifes').html(pl.nLifes);
-}
+};
 
 pl.loseLife = function() {
     --pl.nLifes;
@@ -335,7 +335,7 @@ pl.loseLife = function() {
     // Remove existing moskitos
     pl.activeMoskitos = [];
     pl.moskitoDue = pl.time + pl.MOSKITO_GRACE_TIME;
-}
+};
 
 // ***************************************************************************
 // The bear
@@ -362,7 +362,7 @@ Bear = function() {
     this.activeSide = BearActiveSide.left;
     this.armPos = BearArmPos.med;
     //console.log("Created a bear:", this);
-}
+};
 
 Bear.prototype = {
     // Updates the state of this bear, depending on the moskitos
@@ -426,7 +426,7 @@ BearChild = function() {
     this.moveDue = 0;
     this.nBaths = 0;
     //console.log("Created a bear child:", this);
-}
+};
 
 BearChild.prototype = {
     // Computes the time to the next move, based on the current difficulty
@@ -504,7 +504,7 @@ Moskito = function() {
     this.moveDue = pl.time + this.moveInterval();
     this.state = MoskitoState.flying;
     //console.log("Created a moskito:", this);
-}
+};
 
 Moskito.prototype = {
     // Computes the time to the next move, based on the current difficulty
