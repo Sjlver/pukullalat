@@ -225,16 +225,15 @@ pl.update = function(sceneTime) {
     }
 
     // Move moskitos
-    move_moskitos_loop: for (var m = 0; m < pl.activeMoskitos.length; ++m) {
+    var survivingMoskitos = [];
+    for (var m = 0; m < pl.activeMoskitos.length; ++m) {
         var cur = pl.activeMoskitos[m];
-        if (!cur.update()) {
-            // remove the moskito
-            pl.activeMoskitos[m] = pl.activeMoskitos[pl.activeMoskitos.length - 1];
-            pl.activeMoskitos.pop();
-            --m;
-            continue move_moskitos_loop;
+        if (cur.update()) {
+            // Moskito survived
+            survivingMoskitos.push(pl.activeMoskitos[m]);
         }
     }
+    pl.activeMoskitos = survivingMoskitos;
 
     // Update the bear and the child
     pl.bear.update();
