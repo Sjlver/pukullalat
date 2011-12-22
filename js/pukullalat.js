@@ -481,6 +481,7 @@ BearChild.prototype = {
     // Called by the bear when it pushes the child up
     push: function() {
         --this.position;
+        ++pl.score;
         this.lastMove = pl.time;
         this.moveDue = pl.time + this.moveInterval();
         //console.log("Child is being pushed: ", this);
