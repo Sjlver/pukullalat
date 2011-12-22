@@ -140,7 +140,7 @@ pl.createLoadingScene = function(director) {
         setText("Loading...").
         setLocation(pl.WIDTH / 2.0 - 75, pl.HEIGHT / 2.0 - 60);
     pl.loadingScene.addChild(pl.loadingTextActor);
-    console.log("Loading scene created.");
+    //console.log("Loading scene created.");
 };
 
 /* Creates all the image actors; they are used in several scenes. */
@@ -215,8 +215,7 @@ pl.createActors = function() {
         setLocation(410, 145);
     pl.hudActors.addChild(pl.scoreActor);
 
-    console.log('Created actors.');
-
+    //console.log('Created actors.');
 };
 
 /**
@@ -232,9 +231,26 @@ pl.createMainScene = function(director) {
     pl.mainScene.addChild(pl.childActors);
     pl.mainScene.addChild(pl.moskitoActors);
 
+    // Create buttons for finger control
+    var buttons = [
+        {key: 37, x: 600, y: 335},  // left
+        {key: 38, x: 0,   y: 175},  // up
+        {key: 39, x: 600, y: 175},  // right
+        {key: 40, x: 0,   y: 335},  // down
+    ];
+    $.each(buttons, function(index, b) {
+        var button = new CAAT.Actor().
+            setBounds(b.x, b.y, 200, 150);
+        button.mouseDown = function(mouseEvent) {
+            //console.log("Mouse down on button " + b.key);
+            pl.mainKeyListener(b.key, 'down');
+        };
+        pl.mainScene.addChild(button);
+    });
+
     pl.mainScene.onRenderStart = pl.update;
     pl.mainScene.activated = pl.initNewGame;
-    console.log('Created main scene.');
+    //console.log('Created main scene.');
 };
 
 /* Initializes a new game */
@@ -286,7 +302,7 @@ pl.createGameOverScene = function(director) {
     PlUtility.addBlinkBehavior(pl.cursorTextActor);
     pl.gameOverScene.addChild(pl.cursorTextActor);
 
-    console.log('Created game over scene.');
+    //console.log('Created game over scene.');
 };
 
 // Keyboard handling in the main scene
@@ -296,7 +312,7 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
     //console.log("Key pressed: ", key, "action: ", action);
 
     // Prevent scrolling for arrow keys
-    if (37 <= key && key <= 40) {
+    if (37 <= key && key <= 40 && originalKeyEvent) {
         if (originalKeyEvent.preventDefault) {
             originalKeyEvent.preventDefault();
         } else {
@@ -335,7 +351,7 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
 pl.gameOverKeyListener = function(key, action, modifiers, originalKeyEvent) {
     if (!pl.gameOverScene || pl.gameOverScene.expired) return;
 
-    console.log("Key pressed: ", key, "action: ", action);
+    //console.log("Key pressed: ", key, "action: ", action);
     if (action != 'down') return;
 
     if (key >= 65 && key <= 90) {
@@ -794,7 +810,7 @@ $(document).ready(function() {
                 //setTimeout(function() {
                     pl.createActors();
                     pl.createMainScene(pl.director);
-                    console.log("Main scene created.");
+                    //console.log("Main scene created.");
                     pl.director.switchToNextScene(2000, true, false);
                     //pl.createGameOverScene(pl.director);
                     //pl.director.switchToNextScene(2000, true, false);
