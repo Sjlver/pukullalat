@@ -231,6 +231,11 @@ pl.createActors = function() {
             setBounds(b.x, b.y, 200, 150);
         button.mouseDown = function(mouseEvent) {
             //console.log("Mouse down on button " + b.key);
+            if (mouseKeyEvent.preventDefault) {
+                mouseKeyEvent.preventDefault();
+            } else {
+                mouseKeyEvent.returnValue = false;
+            }
             pl.mainKeyListener(b.key, 'down');
             pl.gameOverKeyListener(b.key, 'down');
         };
