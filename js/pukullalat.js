@@ -147,16 +147,20 @@ pl.createLoadingScene = function(director) {
 pl.createActors = function() {
     // Load image actors
     pl.imageActors = {};
-    pl.handheldActors = new CAAT.ActorContainer();
+    pl.handheldActors = new CAAT.ActorContainer().
+        setBounds(0, 0, pl.WIDTH, pl.HEIGHT).
+        enableEvents(true);
     pl.hudActors = new CAAT.ActorContainer().
+        setBounds(212, 123, 368, 235).
         enableEvents(false);
     pl.bearActors = new CAAT.ActorContainer().
         setBounds(320, 200, 220, 154).
         enableEvents(false);
     pl.childActors = new CAAT.ActorContainer().
+        setBounds(500, 150, 80, 200).
         enableEvents(false);
     pl.moskitoActors = new CAAT.ActorContainer().
-        setBounds(220, 230, 160, 160).
+        setBounds(220, 230, 160, 125).
         enableEvents(false);
 
     var images = [
@@ -174,10 +178,10 @@ pl.createActors = function() {
         {id: 'panda_look_left', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_look_right', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_ouch', x: 0, y: 0, container: pl.bearActors},
-        {id: 'panda_child1', x: 500, y: 150, container: pl.childActors},
-        {id: 'panda_child2', x: 500, y: 190, container: pl.childActors},
-        {id: 'panda_child3', x: 500, y: 230, container: pl.childActors},
-        {id: 'panda_child4', x: 500, y: 300, container: pl.childActors},
+        {id: 'panda_child1', x: 0, y: 0, container: pl.childActors},
+        {id: 'panda_child2', x: 0, y: 40, container: pl.childActors},
+        {id: 'panda_child3', x: 0, y: 80, container: pl.childActors},
+        {id: 'panda_child4', x: 0, y: 150, container: pl.childActors},
         {id: 'moskito1', x: 0, y: 0, container: pl.moskitoActors},
         {id: 'moskito2', x: 32, y: 0, container: pl.moskitoActors},
         {id: 'moskito3', x: 64, y: 0, container: pl.moskitoActors},
@@ -193,9 +197,9 @@ pl.createActors = function() {
         {id: 'moskito11', x: 50, y: 80, container: pl.moskitoActors},
         {id: 'moskito12', x: 75, y: 80, container: pl.moskitoActors},
         {id: 'moskito12_crash', x: 65, y: 70, container: pl.moskitoActors},
-        {id: 'health_bar1', x: 225, y: 135, container: pl.hudActors},
-        {id: 'health_bar2', x: 225, y: 135, container: pl.hudActors},
-        {id: 'health_bar3', x: 225, y: 135, container: pl.hudActors},
+        {id: 'health_bar1', x: 10, y: 10, container: pl.hudActors},
+        {id: 'health_bar2', x: 10, y: 10, container: pl.hudActors},
+        {id: 'health_bar3', x: 10, y: 10, container: pl.hudActors},
     ];
     $(images).each(function(index, image) {
         var actor = new CAAT.Actor().
@@ -212,8 +216,26 @@ pl.createActors = function() {
 
     pl.scoreActor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
-        setLocation(410, 145);
+        setLocation(200, 22);
     pl.hudActors.addChild(pl.scoreActor);
+
+    // Create buttons for finger control
+    var buttons = [
+        {key: 37, x: 600, y: 335},  // left
+        {key: 38, x: 0,   y: 175},  // up
+        {key: 39, x: 600, y: 175},  // right
+        {key: 40, x: 0,   y: 335},  // down
+    ];
+    $.each(buttons, function(index, b) {
+        var button = new CAAT.Actor().
+            setBounds(b.x, b.y, 200, 150);
+        button.mouseDown = function(mouseEvent) {
+            //console.log("Mouse down on button " + b.key);
+            pl.mainKeyListener(b.key, 'down');
+            pl.gameOverKeyListener(b.key, 'down');
+        };
+        pl.handheldActors.addChild(button);
+    });
 
     //console.log('Created actors.');
 };
@@ -230,23 +252,6 @@ pl.createMainScene = function(director) {
     pl.mainScene.addChild(pl.bearActors);
     pl.mainScene.addChild(pl.childActors);
     pl.mainScene.addChild(pl.moskitoActors);
-
-    // Create buttons for finger control
-    var buttons = [
-        {key: 37, x: 600, y: 335},  // left
-        {key: 38, x: 0,   y: 175},  // up
-        {key: 39, x: 600, y: 175},  // right
-        {key: 40, x: 0,   y: 335},  // down
-    ];
-    $.each(buttons, function(index, b) {
-        var button = new CAAT.Actor().
-            setBounds(b.x, b.y, 200, 150);
-        button.mouseDown = function(mouseEvent) {
-            //console.log("Mouse down on button " + b.key);
-            pl.mainKeyListener(b.key, 'down');
-        };
-        pl.mainScene.addChild(button);
-    });
 
     pl.mainScene.onRenderStart = pl.update;
     pl.mainScene.activated = pl.initNewGame;
@@ -348,42 +353,83 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
 };
 
 // Keyboard handling in the game over scene
-pl.gameOverKeyListener = function(key, action, modifiers, originalKeyEvent) {
-    if (!pl.gameOverScene || pl.gameOverScene.expired) return;
-
-    //console.log("Key pressed: ", key, "action: ", action);
-    if (action != 'down') return;
-
-    if (key >= 65 && key <= 90) {
-        var letter = String.fromCharCode(key);
+pl.gameOverKeyListener = (function() {
+    // Some helper functions to manage the player name
+    function getLetter() {
+        var index = pl.cursorTextActor.text.indexOf('_');
+        return pl.playerNameTextActor.text.charAt(index);
+    }
+    function setLetter(letter) {
         var index = pl.cursorTextActor.text.indexOf('_');
         pl.playerNameTextActor.setText(
             pl.playerNameTextActor.text.substring(0, index) +
             letter +
             pl.playerNameTextActor.text.substring(index + 1)
         );
-        if (pl.cursorTextActor.text == '  _') {
-            pl.cursorTextActor.setText('_  ');
-        } else {
-            pl.cursorTextActor.setText(
-                ' ' + pl.cursorTextActor.text.substring(0, 2)
-            );
-        }
-    } else if (key == 8) {
-        // Backspace key
-        if (pl.cursorTextActor.text != '_  ') {
-            pl.cursorTextActor.setText(
-                pl.cursorTextActor.text.substring(1, 2) + ' '
-            );
-        }
-    } else if (key == 10 || key == 13) {
-        // Enter key
-        if (pl.playerNameTextActor.text.indexOf('_') < 0) {
-            alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
-            location.reload();
-        }
     }
-};
+    function moveCursor(offset) {
+        var index = pl.cursorTextActor.text.indexOf('_');
+        index = (index + offset) % 3;
+        if (index < 0) { index += 3 };
+        var chars = [' ', ' ', ' '];
+        chars[index] = '_';
+        pl.cursorTextActor.setText(chars.join(''));
+    }
+
+    return function(key, action, modifiers, originalKeyEvent) {
+        if (!pl.gameOverScene || pl.gameOverScene.expired) return;
+
+        //console.log("Key pressed: ", key, "action: ", action);
+        // Prevent scrolling for arrow keys
+        if (37 <= key && key <= 40 && originalKeyEvent) {
+            if (originalKeyEvent.preventDefault) {
+                originalKeyEvent.preventDefault();
+            } else {
+                originalKeyEvent.returnValue = false;
+            }
+        }
+
+        if (action != 'down') return;
+
+        if (key >= 65 && key <= 90) {
+            var letter = String.fromCharCode(key);
+            setLetter(letter);
+            moveCursor(1);
+        } else if (key == 8 ||  key == 37) {
+            // left arrow or backspace
+            moveCursor(-1);
+        } else if (key == 39) {
+            // right arrow
+            moveCursor(1);
+        } else if (key == 40) {
+            // down arrow
+            var letter = getLetter();
+            if (letter == '_') {
+                setLetter('A');
+            } else if (letter == 'Z') {
+                setLetter('_');
+            } else {
+                setLetter(String.fromCharCode(letter.charCodeAt(0) + 1));
+            }
+        } else if (key == 38) {
+            // up arrow
+            var letter = getLetter();
+            if (letter == '_') {
+                setLetter('Z');
+            } else if (letter == 'A') {
+                setLetter('_');
+            } else {
+                setLetter(String.fromCharCode(letter.charCodeAt(0) - 1));
+            }
+        } else if (key == 10 || key == 13) {
+            // Enter key
+            if (pl.playerNameTextActor.text.indexOf('_') < 0) {
+                alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
+                location.reload();
+            }
+        }
+    };
+})();
 
 // Update game state
 pl.update = function(sceneTime) {
