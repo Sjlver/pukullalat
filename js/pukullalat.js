@@ -808,6 +808,16 @@ $(document).ready(function() {
     );
     //console.log("Initialized Director: ", pl.director);
     $('#the_canvas')[0].appendChild(pl.director.canvas);
+
+    // Resize to full screen size (for mobile devices that have zooming disabled)
+    alert("window: " + window.innerWidth + "x" + window.innerHeight);
+    if (window.innerWidth < pl.WIDTH || window.innerHeight < pl.HEIGHT) {
+        var factorX = window.innerWidth / pl.WIDTH;
+        var factorY = window.innerHeight / pl.HEIGHT;
+        var factor = ((factorX < factorY) ? factorX : factorY);
+        pl.director.setScaleAnchored(factor, factor, 0, 0);
+    }
+
     pl.director.loop(60);
     pl.createLoadingScene(pl.director);
 
