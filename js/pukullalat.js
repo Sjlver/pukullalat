@@ -406,6 +406,13 @@ pl.gameOverKeyListener = (function() {
         } else if (key == 39) {
             // right arrow
             moveCursor(1);
+            if (typeof(originalKeyEvent) == 'undefined' &&
+                    pl.playerNameTextActor.text.indexOf('_') < 0) {
+                // Right button press and all filled out... this means we quit,
+                // because presumably this is a mobile device and the user has
+                // no enter key.
+                pl.endGame();
+            }
         } else if (key == 40) {
             // down arrow
             var letter = getLetter();
@@ -429,8 +436,7 @@ pl.gameOverKeyListener = (function() {
         } else if (key == 10 || key == 13) {
             // Enter key
             if (pl.playerNameTextActor.text.indexOf('_') < 0) {
-                alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
-                location.reload();
+                pl.endGame();
             }
         }
     };
@@ -577,6 +583,12 @@ pl.loseLife = function() {
     pl.activeMoskitos = [];
     pl.moskitoDue = pl.time + pl.MOSKITO_GRACE_TIME;
 };
+
+pl.endGame = function() {
+    alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
+    location.reload();
+};
+
 
 // ***************************************************************************
 // The bear
@@ -810,7 +822,6 @@ $(document).ready(function() {
     $('#the_canvas')[0].appendChild(pl.director.canvas);
 
     // Resize to full screen size (for mobile devices that have zooming disabled)
-    alert("window: " + window.innerWidth + "x" + window.innerHeight);
     if (window.innerWidth < pl.WIDTH || window.innerHeight < pl.HEIGHT) {
         var factorX = window.innerWidth / pl.WIDTH;
         var factorY = window.innerHeight / pl.HEIGHT;
