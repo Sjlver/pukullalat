@@ -122,13 +122,18 @@ var pl = {
 pl.createLoadingScene = function(director) {
     pl.loadingScene = director.createScene();
     pl.loadingActors = {};
-    pl.loadingActors.borderActor = new CAAT.Actor().
+    pl.loadingActors.border1Actor = new CAAT.Actor().
         setLocation((pl.WIDTH - 200) / 2.0, (pl.HEIGHT - 30) / 2.0).
         setSize(200, 30).
-        setFillStyle('#fff').
-        setStrokeStyle('#000').
+        setFillStyle('#000').
         enableEvents(false);
-    pl.loadingScene.addChild(pl.loadingActors.borderActor);
+    pl.loadingScene.addChild(pl.loadingActors.border1Actor);
+    pl.loadingActors.border2Actor = new CAAT.Actor().
+        setLocation((pl.WIDTH - 200) / 2.0 + 3, (pl.HEIGHT - 30) / 2.0 + 3).
+        setSize(194, 24).
+        setFillStyle('#fff').
+        enableEvents(false);
+    pl.loadingScene.addChild(pl.loadingActors.border2Actor);
     pl.loadingActors.progressbarActor = new CAAT.Actor().
         setLocation((pl.WIDTH - 200) / 2.0 + 6, (pl.HEIGHT - 30) / 2.0 + 6).
         setSize(10, 18).
