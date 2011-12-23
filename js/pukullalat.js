@@ -160,7 +160,7 @@ pl.createActors = function() {
         enableEvents(false);
     pl.bearActors = new CAAT.ActorContainer().
         setBounds(320, 200, 220, 154).
-        enableEvents(false);
+        enableEvents(true);
     pl.childActors = new CAAT.ActorContainer().
         setBounds(500, 150, 80, 200).
         enableEvents(false);
@@ -173,12 +173,12 @@ pl.createActors = function() {
         {id: 'panda_bear', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_happy', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_hmm', x: 0, y: 0, container: pl.bearActors},
-        {id: 'panda_left_arm_high', x: 0, y: 0, container: pl.bearActors},
-        {id: 'panda_left_arm_med', x: 0, y: 0, container: pl.bearActors},
-        {id: 'panda_left_arm_low', x: 0, y: 0, container: pl.bearActors},
-        {id: 'panda_right_arm_low', x: 0, y: -5, container: pl.bearActors},
-        {id: 'panda_right_arm_med', x: 0, y: -10, container: pl.bearActors},
-        {id: 'panda_right_arm_high', x: 0, y: -20, container: pl.bearActors},
+        {id: 'panda_left_arm_high', x: 30, y: 30, container: pl.bearActors},
+        {id: 'panda_left_arm_med', x: 12, y: 66, container: pl.bearActors},
+        {id: 'panda_left_arm_low', x: 0, y: 100, container: pl.bearActors},
+        {id: 'panda_right_arm_low', x: 165, y: 100, container: pl.bearActors},
+        {id: 'panda_right_arm_med', x: 160, y: 70, container: pl.bearActors},
+        {id: 'panda_right_arm_high', x: 155, y: 22, container: pl.bearActors},
         {id: 'panda_look_center', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_look_left', x: 0, y: 0, container: pl.bearActors},
         {id: 'panda_look_right', x: 0, y: 0, container: pl.bearActors},
@@ -247,6 +247,71 @@ pl.createActors = function() {
         pl.handheldActors.addChild(button);
     });
 
+    // Directly clicking on the desired arm position should also work...
+    pl.imageActors['panda_left_arm_high'].enableEvents(true);
+    pl.imageActors['panda_left_arm_high'].mouseDown = function(mouseEvent) {
+        pl.bear.activeSide = BearActiveSide.left;
+        pl.bear.armPos = BearArmPos.high;
+    };
+    pl.imageActors['panda_left_arm_med'].enableEvents(true);
+    pl.imageActors['panda_left_arm_med'].mouseDown = function(mouseEvent) {
+        pl.bear.activeSide = BearActiveSide.left;
+        pl.bear.armPos = BearArmPos.med;
+    };
+    pl.imageActors['panda_left_arm_low'].enableEvents(true);
+    pl.imageActors['panda_left_arm_low'].mouseDown = function(mouseEvent) {
+        pl.bear.activeSide = BearActiveSide.left;
+        pl.bear.armPos = BearArmPos.low;
+    };
+    pl.imageActors['panda_right_arm_high'].enableEvents(true);
+    pl.imageActors['panda_right_arm_high'].mouseDown = function(mouseEvent) {
+        if (pl.bear.activeSide == BearActiveSide.left) {
+            if (pl.child.position != BearChildPos.water) {
+                pl.bear.activeSide = BearActiveSide.right;
+                pl.bear.armPos = BearArmPos.high;
+                pl.bear.holdChild();
+            }
+        } else {
+            // If we're already on the right side, we can push the child up one
+            // step at a time
+            if (pl.bear.armPos == BearArmPos.med && pl.child.position == BearChildPos.med) {
+                pl.bear.armPos = BearArmPos.high;
+                pl.bear.pushChild();
+            } else if (pl.child.position == BearChildPos.high) {
+                pl.bear.armPos = BearArmPos.high;
+                pl.bear.holdChild();
+            }
+        }
+    };
+    pl.imageActors['panda_right_arm_med'].enableEvents(true);
+    pl.imageActors['panda_right_arm_med'].mouseDown = function(mouseEvent) {
+        if (pl.bear.activeSide == BearActiveSide.left) {
+            if (pl.child.position != BearChildPos.water) {
+                pl.bear.activeSide = BearActiveSide.right;
+                pl.bear.armPos = BearArmPos.med;
+                pl.bear.holdChild();
+            }
+        } else {
+            // If we're already on the right side, we can push the child up one
+            // step at a time
+            if (pl.bear.armPos == BearArmPos.low && pl.child.position == BearChildPos.low) {
+                pl.bear.armPos = BearArmPos.med;
+                pl.bear.pushChild();
+            } else if (pl.child.position <= BearChildPos.med) {
+                pl.bear.armPos = BearArmPos.med;
+                pl.bear.holdChild();
+            }
+        }
+    };
+    pl.imageActors['panda_right_arm_low'].enableEvents(true);
+    pl.imageActors['panda_right_arm_low'].mouseDown = function(mouseEvent) {
+        if (pl.child.position == BearChildPos.water) return;
+
+        pl.bear.activeSide = BearActiveSide.right;
+        pl.bear.armPos = BearArmPos.low;
+        pl.bear.holdChild();
+    };
+
     //console.log('Created actors.');
 };
 
@@ -259,9 +324,9 @@ pl.createMainScene = function(director) {
 
     pl.mainScene.addChild(pl.handheldActors);
     pl.mainScene.addChild(pl.hudActors);
-    pl.mainScene.addChild(pl.bearActors);
     pl.mainScene.addChild(pl.childActors);
     pl.mainScene.addChild(pl.moskitoActors);
+    pl.mainScene.addChild(pl.bearActors);
 
     pl.mainScene.onRenderStart = pl.update;
     pl.mainScene.activated = pl.initNewGame;
