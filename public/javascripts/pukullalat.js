@@ -336,7 +336,8 @@ pl.createIntroScene = function(director) {
     var titleText = "Pukul lalat\n" +
         "Für mini Familie\n" +
         "Mit Dank für au\n" +
-        "die guete Erinnerige";
+        "die guete Erinnerige\n\n" +
+        "Frohi Wiehnacht :)";
     $.each(titleText.split("\n"), function(index, text) {
         var titleTextActor = new CAAT.TextActor().
             setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
