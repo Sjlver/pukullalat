@@ -140,11 +140,12 @@ pl.createLoadingScene = function(director) {
         setFillStyle('#000').
         enableEvents(false);
     pl.loadingScene.addChild(pl.loadingActors.progressbarActor);
-    pl.loadingTextActor = new CAAT.TextActor().
+
+    var loadingTextActor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setText("Loading...").
         setLocation(pl.WIDTH / 2.0 - 75, pl.HEIGHT / 2.0 - 60);
-    pl.loadingScene.addChild(pl.loadingTextActor);
+    pl.loadingScene.addChild(loadingTextActor);
     //console.log("Loading scene created.");
 };
 
@@ -360,11 +361,11 @@ pl.createIntroScene = function(director) {
 
     // Replace key listener
     pl.introScene.activated = function() {
-        console.log("Intro scene activated");
+        //console.log("Intro scene activated");
         $(document).off('keydown');
         $(document).on('keydown', pl.introKeyListener);
     }
-    console.log('Created intro scene.');
+    //console.log('Created intro scene.');
 };
 
 /**
@@ -415,16 +416,17 @@ pl.createGameOverScene = function(director) {
         pl.gameOverScene
     );
 
-    pl.gameOverText1Actor = new CAAT.TextActor().
+    var gameOverText1Actor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setText("Game over...").
         setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 - 20);
-    pl.gameOverScene.addChild(pl.gameOverText1Actor);
-    pl.gameOverText2Actor = new CAAT.TextActor().
+    pl.gameOverScene.addChild(gameOverText1Actor);
+    var gameOverText2Actor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setText("Your name:").
         setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 30);
-    pl.gameOverScene.addChild(pl.gameOverText2Actor);
+    pl.gameOverScene.addChild(gameOverText2Actor);
+
     pl.playerNameTextActor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setText("___").
@@ -439,12 +441,12 @@ pl.createGameOverScene = function(director) {
 
     // Replace key listener
     pl.gameOverScene.activated = function() {
-        console.log("Game over scene activated");
+        //console.log("Game over scene activated");
         $(document).off('keydown');
         $(document).on('keydown', pl.gameOverKeyListener);
     }
 
-    console.log('Created game over scene.');
+    //console.log('Created game over scene.');
 };
 
 /**
@@ -471,18 +473,28 @@ pl.createHighscoreScene = function(director, data) {
             setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
             setText(sprintf("%s  %05d", item.name, parseInt(item.score, 10))).
             setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 30 + 30 * index);
+        if (item.name == pl.playerNameTextActor.text && parseInt(item.score, 10) == pl.score) {
+            PlUtility.addBlinkBehavior(scoreTextActor);
+        }
         pl.highscoreScene.addChild(scoreTextActor);
     });
-    console.log('Created highscore scene.');
+
+    // Remove key listener
+    pl.highscoreScene.activated = function() {
+        //console.log("Game over scene activated");
+        $(document).off('keydown');
+    }
+
+    //console.log('Created highscore scene.');
 };
 
 // Keyboard handling in the intro scene
 pl.introKeyListener = function(event) {
-    console.log("Intro key pressed: ", event);
+    //console.log("Intro key pressed: ", event);
 
     var keysToStart = [10, 13, 37, 38, 39, 40, 65, 68, 83, 87];
     if (!pl.mainScene && keysToStart.indexOf(event.keyCode) >= 0) {
-        console.log("Creating main scene...");
+        //console.log("Creating main scene...");
         pl.createMainScene(pl.director);
         pl.director.switchToNextScene(0, true, false);
     }
@@ -490,7 +502,7 @@ pl.introKeyListener = function(event) {
 
 // Keyboard handling in the main scene
 pl.mainKeyListener = function(event) {
-    console.log("Main key pressed: ", event);
+    //console.log("Main key pressed: ", event);
 
     // Prevent scrolling for arrow keys
     if (37 <= event.keyCode && event.keyCode <= 40) {
@@ -548,7 +560,7 @@ pl.gameOverKeyListener = (function() {
     }
 
     return function(event) {
-        console.log("GameOver key pressed: ", event);
+        //console.log("GameOver key pressed: ", event);
 
         // Prevent scrolling for arrow keys
         if (37 <= event.keyCode && event.keyCode <= 40) {
