@@ -314,6 +314,15 @@ pl.createActors = function() {
     //console.log('Created actors.');
 };
 
+pl.addActorsToScene = function(actors, scene) {
+    $.each(actors, function(index, actor) {
+        if (actor.parent) {
+            actor.parent.removeChild(actor);
+        }
+        scene.addChild(actor);
+    });
+}
+
 /**
  * Creates the intro scene
  * @param director
@@ -321,10 +330,32 @@ pl.createActors = function() {
 pl.createIntroScene = function(director) {
     pl.introScene = director.createScene();
 
+    pl.addActorsToScene([pl.handheldActors], pl.introScene);
+
+    var titleText = "Pukul lalat\n" +
+        "Für mini Familie\n" +
+        "Mit Dank für au\n" +
+        "die guete Erinnerige";
+    $.each(titleText.split("\n"), function(index, text) {
+        var titleTextActor = new CAAT.TextActor().
+            setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+            setText(text).
+            calcTextSize(director).
+            centerOn(400, 250).
+            setAlpha(0.0);
+        titleTextActor.addBehavior(new CAAT.AlphaBehavior().
+            setFrameTime(5000 * index, 5500).
+            setValues(0.0, 1.0).
+            setInterpolator(new CAAT.Interpolator().createExponentialOutInterpolator(3, true))
+        );
+        pl.introScene.addChild(titleTextActor);
+    });
+
     var introTextActor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
         setText("WASD/Arrows => Play").
-        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 - 20);
+        calcTextSize(director).
+        centerOn(400, 320);
     pl.introScene.addChild(introTextActor);
 
     // Replace key listener
@@ -343,11 +374,10 @@ pl.createIntroScene = function(director) {
 pl.createMainScene = function(director) {
     pl.mainScene = director.createScene();
 
-    pl.mainScene.addChild(pl.handheldActors);
-    pl.mainScene.addChild(pl.hudActors);
-    pl.mainScene.addChild(pl.childActors);
-    pl.mainScene.addChild(pl.moskitoActors);
-    pl.mainScene.addChild(pl.bearActors);
+    pl.addActorsToScene(
+        [pl.handheldActors, pl.hudActors, pl.childActors, pl.moskitoActors, pl.bearActors],
+        pl.mainScene
+    );
 
     pl.mainScene.onRenderStart = pl.update;
     pl.mainScene.activated = pl.initNewGame;
@@ -380,10 +410,10 @@ pl.initNewGame = function() {
 pl.createGameOverScene = function(director) {
     pl.gameOverScene = director.createScene();
 
-    pl.mainScene.removeChild(pl.handheldActors);
-    pl.gameOverScene.addChild(pl.handheldActors);
-    pl.mainScene.removeChild(pl.hudActors);
-    pl.gameOverScene.addChild(pl.hudActors);
+    pl.addActorsToScene(
+        [pl.handheldActors, pl.hudActors],
+        pl.gameOverScene
+    );
 
     pl.gameOverText1Actor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
@@ -425,10 +455,10 @@ pl.createGameOverScene = function(director) {
 pl.createHighscoreScene = function(director, data) {
     pl.highscoreScene = director.createScene();
 
-    pl.gameOverScene.removeChild(pl.handheldActors);
-    pl.highscoreScene.addChild(pl.handheldActors);
-    pl.gameOverScene.removeChild(pl.hudActors);
-    pl.highscoreScene.addChild(pl.hudActors);
+    pl.addActorsToScene(
+        [pl.handheldActors, pl.hudActors],
+        pl.highscoreScene
+    );
 
     var highscoreTextActor = new CAAT.TextActor().
         setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
