@@ -334,8 +334,8 @@ pl.createIntroScene = function(director) {
     pl.addActorsToScene([pl.handheldActors], pl.introScene);
 
     var titleText = "Pukul lalat\n" +
-        "Für mini Familie\n" +
-        "Mit Dank für au\n" +
+        "Fuer mini Familie\n" +
+        "Mit Dank fuer au\n" +
         "die guete Erinnerige\n\n" +
         "Frohi Wiehnacht :)";
     $.each(titleText.split("\n"), function(index, text) {
