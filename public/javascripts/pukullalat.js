@@ -241,8 +241,7 @@ pl.createActors = function() {
             } else {
                 mouseEvent.returnValue = false;
             }
-            pl.mainKeyListener(b.key, 'down');
-            pl.gameOverKeyListener(b.key, 'down');
+            $(document).trigger(new $.Event("keydown", {keyCode: b.key}));
         };
         pl.handheldActors.addChild(button);
     });
@@ -316,6 +315,28 @@ pl.createActors = function() {
 };
 
 /**
+ * Creates the intro scene
+ * @param director
+ */
+pl.createIntroScene = function(director) {
+    pl.introScene = director.createScene();
+
+    var introTextActor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("WASD/Arrows => Play").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 - 20);
+    pl.introScene.addChild(introTextActor);
+
+    // Replace key listener
+    pl.introScene.activated = function() {
+        console.log("Intro scene activated");
+        $(document).off('keydown');
+        $(document).on('keydown', pl.introKeyListener);
+    }
+    console.log('Created intro scene.');
+};
+
+/**
  * Creates the main scene, with the handheld, bear, moskitos, ...
  * @param director
  */
@@ -346,6 +367,10 @@ pl.initNewGame = function() {
 
     pl.bear = new Bear();
     pl.child = new BearChild();
+
+    // Replace key listener
+    $(document).off('keydown');
+    $(document).on('keydown', pl.mainKeyListener);
 };
 
 /**
@@ -382,7 +407,14 @@ pl.createGameOverScene = function(director) {
     PlUtility.addBlinkBehavior(pl.cursorTextActor);
     pl.gameOverScene.addChild(pl.cursorTextActor);
 
-    //console.log('Created game over scene.');
+    // Replace key listener
+    pl.gameOverScene.activated = function() {
+        console.log("Game over scene activated");
+        $(document).off('keydown');
+        $(document).on('keydown', pl.gameOverKeyListener);
+    }
+
+    console.log('Created game over scene.');
 };
 
 /**
@@ -414,38 +446,42 @@ pl.createHighscoreScene = function(director, data) {
     console.log('Created highscore scene.');
 };
 
-// Keyboard handling in the main scene
-pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
-    if (!pl.mainScene || pl.mainScene.expired) return;
+// Keyboard handling in the intro scene
+pl.introKeyListener = function(event) {
+    console.log("Intro key pressed: ", event);
 
-    //console.log("Key pressed: ", key, "action: ", action);
+    var keysToStart = [10, 13, 37, 38, 39, 40, 65, 68, 83, 87];
+    if (!pl.mainScene && keysToStart.indexOf(event.keyCode) >= 0) {
+        console.log("Creating main scene...");
+        pl.createMainScene(pl.director);
+        pl.director.switchToNextScene(0, true, false);
+    }
+}
+
+// Keyboard handling in the main scene
+pl.mainKeyListener = function(event) {
+    console.log("Main key pressed: ", event);
 
     // Prevent scrolling for arrow keys
-    if (37 <= key && key <= 40 && originalKeyEvent) {
-        if (originalKeyEvent.preventDefault) {
-            originalKeyEvent.preventDefault();
-        } else {
-            originalKeyEvent.returnValue = false;
-        }
+    if (37 <= event.keyCode && event.keyCode <= 40) {
+        event.preventDefault();
     }
 
-    if (action != 'down') return;
-
-    if (key == 65 || key == 37) {
+    if (event.keyCode == 65 || event.keyCode == 37) {
         // 'A' key
         pl.bear.activeSide = BearActiveSide.left;
-    } else if (key == 68 || key == 39) {
+    } else if (event.keyCode == 68 || event.keyCode == 39) {
         // 'D' key
         if (pl.child.position != BearChildPos.water) {
             pl.bear.activeSide = BearActiveSide.right;
             pl.bear.holdChild();
         }
-    } else if (key == 83 || key == 40) {
+    } else if (event.keyCode == 83 || event.keyCode == 40) {
         // 'S' key
         if (pl.bear.armPos < 2) {
             pl.bear.armPos += 1;
         }
-    } else if (key == 87 || key == 38) {
+    } else if (event.keyCode == 87 || event.keyCode == 38) {
         // 'W' key
         if (pl.bear.armPos > 0) {
             pl.bear.armPos -= 1;
@@ -458,6 +494,7 @@ pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
 
 // Keyboard handling in the game over scene
 pl.gameOverKeyListener = (function() {
+
     // Some helper functions to manage the player name
     function getLetter() {
         var index = pl.cursorTextActor.text.indexOf('_');
@@ -480,39 +517,31 @@ pl.gameOverKeyListener = (function() {
         pl.cursorTextActor.setText(chars.join(''));
     }
 
-    return function(key, action, modifiers, originalKeyEvent) {
-        if (!pl.gameOverScene || pl.gameOverScene.expired) return;
+    return function(event) {
+        console.log("GameOver key pressed: ", event);
 
-        //console.log("Key pressed: ", key, "action: ", action);
         // Prevent scrolling for arrow keys
-        if (37 <= key && key <= 40 && originalKeyEvent) {
-            if (originalKeyEvent.preventDefault) {
-                originalKeyEvent.preventDefault();
-            } else {
-                originalKeyEvent.returnValue = false;
-            }
+        if (37 <= event.keyCode && event.keyCode <= 40) {
+            event.preventDefault();
         }
 
-        if (action != 'down') return;
-
-        if (key >= 65 && key <= 90) {
-            var letter = String.fromCharCode(key);
+        if (event.keyCode >= 65 && event.keyCode <= 90) {
+            var letter = String.fromCharCode(event.keyCode);
             setLetter(letter);
             moveCursor(1);
-        } else if (key == 8 ||  key == 37) {
+        } else if (event.keyCode == 8 ||  event.keyCode == 37) {
             // left arrow or backspace
             moveCursor(-1);
-        } else if (key == 39) {
+        } else if (event.keyCode == 39) {
             // right arrow
             moveCursor(1);
-            if (typeof(originalKeyEvent) == 'undefined' &&
-                    pl.playerNameTextActor.text.indexOf('_') < 0) {
-                // Right button press and all filled out... this means we quit,
+            if (pl.playerNameTextActor.text.indexOf('_') < 0) {
+                // Move right and all filled out... this means we quit,
                 // because presumably this is a mobile device and the user has
                 // no enter key.
                 pl.endGame();
             }
-        } else if (key == 40) {
+        } else if (event.keyCode == 40) {
             // down arrow
             var letter = getLetter();
             if (letter == '_') {
@@ -522,7 +551,7 @@ pl.gameOverKeyListener = (function() {
             } else {
                 setLetter(String.fromCharCode(letter.charCodeAt(0) + 1));
             }
-        } else if (key == 38) {
+        } else if (event.keyCode == 38) {
             // up arrow
             var letter = getLetter();
             if (letter == '_') {
@@ -532,7 +561,7 @@ pl.gameOverKeyListener = (function() {
             } else {
                 setLetter(String.fromCharCode(letter.charCodeAt(0) - 1));
             }
-        } else if (key == 10 || key == 13) {
+        } else if (event.keyCode == 10 || event.keyCode == 13) {
             // Enter key
             if (pl.playerNameTextActor.text.indexOf('_') < 0) {
                 pl.endGame();
@@ -936,9 +965,6 @@ $(document).ready(function() {
     pl.director.loop(60);
     pl.createLoadingScene(pl.director);
 
-    CAAT.registerKeyListener(pl.mainKeyListener);
-    CAAT.registerKeyListener(pl.gameOverKeyListener);
-
     new CAAT.ImagePreloader().loadImages(
         [
         {id:'pukullalat_handheld',  url:'images/pukullalat_handheld.png'},
@@ -985,8 +1011,8 @@ $(document).ready(function() {
             if (counter == 36) {
                 //setTimeout(function() {
                     pl.createActors();
-                    pl.createMainScene(pl.director);
-                    //console.log("Main scene created.");
+                    pl.createIntroScene(pl.director);
+                    //console.log("Intro scene created.");
                     pl.director.switchToNextScene(2000, true, false);
                     //pl.createGameOverScene(pl.director);
                     //pl.director.switchToNextScene(2000, true, false);
