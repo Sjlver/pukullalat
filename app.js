@@ -38,9 +38,9 @@ app.get('/', routes.index);
 
 // Highscore management
 var highscores = [
-    {name: 'ABC', score: 5},
-    {name: 'DEF', score: 3},
-    {name: 'GHI', score: 1},
+    {name: 'ABC', score: 500},
+    {name: 'DEF', score: 300},
+    {name: 'GHI', score: 100},
 ];
 app.get('/highscores', function(req, res) {
     res.writeHead(200, {'content-type': 'application/json'});
