@@ -385,6 +385,35 @@ pl.createGameOverScene = function(director) {
     //console.log('Created game over scene.');
 };
 
+/**
+ * Creates the high score scene
+ * @param director
+ * @param data         the high score data to display
+ */
+pl.createHighscoreScene = function(director, data) {
+    pl.highscoreScene = director.createScene();
+
+    pl.gameOverScene.removeChild(pl.handheldActors);
+    pl.highscoreScene.addChild(pl.handheldActors);
+    pl.gameOverScene.removeChild(pl.hudActors);
+    pl.highscoreScene.addChild(pl.hudActors);
+
+    var highscoreTextActor = new CAAT.TextActor().
+        setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+        setText("Highscores").
+        setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 - 20);
+    pl.highscoreScene.addChild(highscoreTextActor);
+
+    $.each(data, function(index, item) {
+        var scoreTextActor = new CAAT.TextActor().
+            setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
+            setText(sprintf("%s  %05d", item.name, parseInt(item.score, 10))).
+            setLocation(pl.WIDTH / 2.0 - 80, pl.HEIGHT / 2.0 + 30 + 30 * index);
+        pl.highscoreScene.addChild(scoreTextActor);
+    });
+    console.log('Created highscore scene.');
+};
+
 // Keyboard handling in the main scene
 pl.mainKeyListener = function(key, action, modifiers, originalKeyEvent) {
     if (!pl.mainScene || pl.mainScene.expired) return;
@@ -655,8 +684,13 @@ pl.loseLife = function() {
 };
 
 pl.endGame = function() {
-    alert ("Congrats, " + pl.playerNameTextActor.text + ", you scored " + pl.score);
-    location.reload();
+    $.post('/highscores',
+        {name: pl.playerNameTextActor.text, score: pl.score},
+        function(data, textStatus, jqXHR) {
+            pl.createHighscoreScene(pl.director, data);
+            pl.director.switchToNextScene(2000, true, false);
+        }
+    );
 };
 
 
