@@ -55,6 +55,7 @@ app.post('/highscores', function(req, res) {
         res.writeHead(403, {'content-type': 'text/plain'});
         res.end('\n');
     }
+    score.score = parseInt(score.score, 10);
     highscores.push(score);
     highscores.sort(function(a, b) {
         if (a.score > b.score) {
