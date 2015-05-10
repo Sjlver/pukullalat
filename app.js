@@ -3,8 +3,9 @@
  * Module dependencies.
  */
 
-var express = require('express')
-  , routes = require('./routes')
+var express = require('express');
+var npid = require('npid');
+var routes = require('./routes');
 
 var app = module.exports = express.createServer();
 
@@ -78,3 +79,11 @@ app.post('/highscores', function(req, res) {
 // Get going
 app.listen(1612);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+
+try {
+    var pid = npid.create('/tmp/pukullalat.pid');
+    pid.removeOnExit();
+} catch (err) {
+    console.log(err);
+    process.exit(1);
+}
