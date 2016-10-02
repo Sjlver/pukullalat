@@ -339,20 +339,22 @@ pl.createIntroScene = function(director) {
 
     pl.addActorsToScene([pl.handheldActors], pl.introScene);
 
-    var titleText = "Pukul lalat\n" +
-        "Fuer mini Familie\n" +
-        "Mit Dank fuer au\n" +
-        "die guete Erinnerige\n\n" +
-        "Frohi Wiehnacht :)";
-    $.each(titleText.split("\n"), function(index, text) {
+    var titleText = [
+        {text: "Pukul Lalat", start: 0},
+        {text: "Fuer mini Familie", start: 10000},
+        {text: "Mit Dank fuer au", start: 15000},
+        {text: "die guete Erinnerige", start: 20000},
+        {text: "", start: 25000},
+        {text: "Frohi Wiehnacht :)", start: 30000}];
+    $.each(titleText, function(index, title) {
         var titleTextActor = new CAAT.TextActor().
             setFont('20px "DigitaldreamFatSkewRegular", "Comic Sans MS", cursive').
-            setText(text).
+            setText(title.text).
             calcTextSize(director).
             centerOn(400, 250).
             setAlpha(0.0);
         titleTextActor.addBehavior(new CAAT.AlphaBehavior().
-            setFrameTime(5000 * index, 5500).
+            setFrameTime(title.start, 5500).
             setValues(0.0, 1.0).
             setInterpolator(new CAAT.Interpolator().createExponentialOutInterpolator(3, true))
         );
