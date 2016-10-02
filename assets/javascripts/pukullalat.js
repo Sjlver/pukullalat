@@ -93,6 +93,12 @@ var PlUtility = {
         delete actor.blinkBehaviorTimeout;
         actor.setVisible(true);
     },
+
+    recordEvent: function(category, action, label, value) {
+        if (typeof ga != 'undefined') {
+            ga('send', 'event', category, action, label, value);
+        }
+    },
 };
 
 
@@ -152,7 +158,7 @@ pl.createLoadingScene = function(director) {
         setText("Loading...").
         setLocation(pl.WIDTH / 2.0 - 75, pl.HEIGHT / 2.0 - 60);
     pl.loadingScene.addChild(loadingTextActor);
-    //console.log("Loading scene created.");
+    console.log("Loading scene created.");
 };
 
 /* Creates all the image actors; they are used in several scenes. */
@@ -318,7 +324,7 @@ pl.createActors = function() {
         pl.bear.holdChild();
     };
 
-    //console.log('Created actors.');
+    console.log('Created actors.');
 };
 
 pl.addActorsToScene = function(actors, scene) {
@@ -370,11 +376,14 @@ pl.createIntroScene = function(director) {
 
     // Replace key listener
     pl.introScene.activated = function() {
-        //console.log("Intro scene activated");
+        console.log("Intro scene activated");
+        PlUtility.recordEvent("Game", "intro", "Intro scene activated");
+
         $(document).off('keydown');
         $(document).on('keydown', pl.introKeyListener);
     };
-    //console.log('Created intro scene.');
+
+    console.log('Created intro scene.');
 };
 
 /**
@@ -391,7 +400,7 @@ pl.createMainScene = function(director) {
 
     pl.mainScene.onRenderStart = pl.update;
     pl.mainScene.activated = pl.initNewGame;
-    //console.log('Created main scene.');
+    console.log('Created main scene.');
 };
 
 /* Initializes a new game */
@@ -411,6 +420,9 @@ pl.initNewGame = function() {
     // Replace key listener
     $(document).off('keydown');
     $(document).on('keydown', pl.mainKeyListener);
+
+    console.log("Game initialized");
+    PlUtility.recordEvent("Game", "newgame", "Game initialized");
 };
 
 /**
@@ -450,12 +462,15 @@ pl.createGameOverScene = function(director) {
 
     // Replace key listener
     pl.gameOverScene.activated = function() {
-        //console.log("Game over scene activated");
+        console.log("Game over scene activated");
+        PlUtility.recordEvent("Game", "gameover", "Game over", pl.score);
+        PlUtility.recordEvent("Game", "gameover-time", "Game over", pl.time);
+
         $(document).off('keydown');
         $(document).on('keydown', pl.gameOverKeyListener);
     };
 
-    //console.log('Created game over scene.');
+    console.log('Created game over scene.');
 };
 
 /**
@@ -518,11 +533,11 @@ pl.createHighscoreScene = function(director, data) {
 
     // Remove key listener
     pl.highscoreScene.activated = function() {
-        //console.log("Game over scene activated");
+        console.log("High score scene activated");
         $(document).off('keydown');
     };
 
-    //console.log('Created highscore scene.');
+    console.log('Created highscore scene.');
 };
 
 // Keyboard handling in the intro scene
@@ -531,7 +546,7 @@ pl.introKeyListener = function(event) {
 
     var keysToStart = [10, 13, 37, 38, 39, 40, 65, 68, 83, 87];
     if (!pl.mainScene && keysToStart.indexOf(event.keyCode) >= 0) {
-        //console.log("Creating main scene...");
+        console.log("Creating main scene...");
         pl.createMainScene(pl.director);
         pl.director.switchToNextScene(0, true, false);
     }
@@ -775,7 +790,10 @@ pl.loseLife = function() {
         return;
     }
 
-    //console.log("Losing a live...");
+    console.log("Losing a live...");
+    PlUtility.recordEvent("Game", "loselife", "Lost life (" + pl.nLives + " left)", pl.score);
+    PlUtility.recordEvent("Game", "loselife-time", "Lost life (" + pl.nLives + " left)", pl.time);
+
     var shake = new CAAT.ScaleBehavior().
         setFrameTime(pl.time, 500).
         setValues(1.0, 1.1, 1.0, 1.1).
@@ -796,6 +814,7 @@ pl.loseLife = function() {
 
 pl.endGame = function() {
     var scores = pl.addHighScore(pl.playerNameTextActor.text, pl.score);
+    PlUtility.recordEvent("Game", "end", "High score: " + pl.playerNameTextActor.text, pl.score);
     pl.createHighscoreScene(pl.director, scores);
     pl.director.switchToNextScene(2000, true, false);
 };
@@ -825,7 +844,7 @@ Bear = function() {
     this.faceState = BearFaceState.happy;
     this.activeSide = BearActiveSide.left;
     this.armPos = BearArmPos.med;
-    //console.log("Created a bear:", this);
+    console.log("Created a bear:", this);
 };
 
 Bear.prototype = {
@@ -889,7 +908,7 @@ BearChild = function() {
     this.lastMove = 0;
     this.moveDue = 0;
     this.nBaths = 0;
-    //console.log("Created a bear child:", this);
+    console.log("Created a bear child:", this);
 };
 
 BearChild.prototype = {
@@ -914,7 +933,7 @@ BearChild.prototype = {
             this.active = true;
             this.lastMove = pl.time;
             this.moveDue = pl.time + this.moveInterval();
-            //console.log("Activated the bear child: ", this);
+            console.log("Activated the bear child: ", this);
         }
 
         if (this.active) {
@@ -1029,7 +1048,7 @@ $(document).ready(function() {
         pl.WIDTH,
         pl.HEIGHT
     );
-    //console.log("Initialized Director: ", pl.director);
+    console.log("Initialized Director: ", pl.director);
     $('#the_canvas')[0].appendChild(pl.director.canvas);
 
     // Resize to full screen size (for mobile devices that have zooming disabled)
@@ -1083,13 +1102,13 @@ $(document).ready(function() {
         {id:'health_bar3',          url:'/pukullalat/assets/images/health_bar3.png'},
         ],
         function(counter, images) {
-            //console.log("loaded images: ", counter, images);
+            console.log("loaded images: ", counter, images);
             pl.director.setImagesCache(images);
             pl.loadingActors.progressbarActor.setSize(10 + 178 * counter / 36.0, 18);
             if (counter == 36) {
                 pl.createActors();
                 pl.createIntroScene(pl.director);
-                //console.log("Intro scene created.");
+                console.log("Intro scene created.");
                 pl.director.switchToNextScene(2000, true, false);
             }
         }
