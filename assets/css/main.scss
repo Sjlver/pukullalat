@@ -58,7 +58,9 @@ h1, h2, h3 {
 
 div#the_canvas {
   width: 800px;
+  max-width: 100%;
   height: 482px;
+  max-height: 100%;
   margin-left: auto;
   margin-right: auto;
 }

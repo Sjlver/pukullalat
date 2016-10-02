@@ -336,6 +336,67 @@ pl.addActorsToScene = function(actors, scene) {
     });
 };
 
+pl.tryFullscreen = function() {
+    var doc = window.document;
+    var canvasWrapper = $('#the_canvas');
+    if (canvasWrapper.width() >= pl.WIDTH && canvasWrapper.height() >= pl.HEIGHT) {
+        // No need for fullscreen
+        console.log("Canvas is large enough; not entering fullscreen.");
+        return false;
+    }
+
+    console.log("Canvas is small... trying fullscreen.");
+    var canvas = pl.director.canvas;
+    var requestFullscreen = (canvas.requestFullscreen || canvas.mozRequestFullScreen ||
+        canvas.webkitRequestFullScreen || canvas.msRequestFullscreen);
+    if(requestFullscreen && !doc.fullscreenElement && !doc.mozFullScreenElement &&
+            !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+        requestFullscreen.call(canvas);
+        console.log("Entered fullscreen");
+        return true;
+    }
+
+    return false;
+};
+
+pl.onWindowResize = function() {
+    var w = $(window).width();
+    var h = $(window).height();
+    console.log("Window was resized: width is ", w, ", height is ", h);
+
+    // Resize the canvas accordingly
+    var canvas = $('#the_canvas');
+    var cw = (w < pl.WIDTH) ? w : pl.WIDTH;
+    var ch = (h < pl.HEIGHT) ? h : pl.HEIGHT;
+    canvas.css("width", cw + "px");
+    canvas.css("height", ch + "px"); 
+
+    pl.reScale();
+};
+
+pl.reScale = function() {
+    var canvas = $('#the_canvas');
+    var factorX, factorY, factor, anchorX, anchorY;
+    factorX = canvas.width() / pl.WIDTH;
+    factorY = canvas.height() / pl.HEIGHT;
+
+    // Scale on whichever factor is smaller. Center in the larger dimension.
+    factor = (factorX < factorY) ? factorX : factorY;
+    anchorX = 0.0;
+    anchorY = 0.0;
+
+    // In fullscreen mode, scaling anchors behave weirdly. Work around it by
+    // forcing them to be 0.5 in this case.
+    var doc = window.document;
+    if(doc.fullscreenElement || doc.mozFullScreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
+        anchorX = 0.5;
+        anchorY = 0.5;
+    }
+
+    pl.director.setScaleAnchored(factor, factor, anchorX, anchorY);
+    console.log("Re-scaling: width is ", canvas.width(), ", height is ", canvas.height(), ", factor is ", factor);
+};
+
 /**
  * Creates the intro scene
  * @param director
@@ -416,6 +477,12 @@ pl.initNewGame = function() {
 
     pl.bear = new Bear();
     pl.child = new BearChild();
+
+    // Try fullscreen mode, if needed and possible
+    if (pl.tryFullscreen()) {
+        console.log("Fullscreen!");
+        pl.reScale();
+    }
 
     // Replace key listener
     $(document).off('keydown');
@@ -1051,13 +1118,9 @@ $(document).ready(function() {
     console.log("Initialized Director: ", pl.director);
     $('#the_canvas')[0].appendChild(pl.director.canvas);
 
-    // Resize to full screen size (for mobile devices that have zooming disabled)
-    if (window.innerWidth < pl.WIDTH || window.innerHeight < pl.HEIGHT) {
-        var factorX = window.innerWidth / pl.WIDTH;
-        var factorY = window.innerHeight / pl.HEIGHT;
-        var factor = ((factorX < factorY) ? factorX : factorY);
-        pl.director.setScaleAnchored(factor, factor, 0, 0);
-    }
+    // Handle window resizing
+    $(window).bind("resize", pl.onWindowResize);
+    pl.reScale();
 
     pl.director.loop(60);
     pl.createLoadingScene(pl.director);
@@ -1102,7 +1165,6 @@ $(document).ready(function() {
         {id:'health_bar3',          url:'/pukullalat/assets/images/health_bar3.png'},
         ],
         function(counter, images) {
-            console.log("loaded images: ", counter, images);
             pl.director.setImagesCache(images);
             pl.loadingActors.progressbarActor.setSize(10 + 178 * counter / 36.0, 18);
             if (counter == 36) {
