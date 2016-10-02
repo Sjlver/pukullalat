@@ -2,7 +2,6 @@
  * Site header
  */
 .site-header {
-  border-top: 5px solid $grey-color-dark;
   border-bottom: 1px solid $grey-color-light;
   min-height: 56px;
 
@@ -86,7 +85,6 @@
     }
   }
 }
-
 
 
 /**
@@ -233,5 +231,16 @@
     @include media-query($on-laptop) {
       font-size: 18px;
     }
+  }
+}
+
+
+/* Don't display header if we're in landscape mode with low screen height */
+@media screen and (max-height: 550px) and (orientation: landscape) {
+  .site-header {
+    display: none;
+  }
+  .page-content {
+    padding: 0;
   }
 }
