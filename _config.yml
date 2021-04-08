@@ -25,4 +25,4 @@ google_analytics: UA-55675537-2
 
 # Build settings
 markdown: kramdown
-exclude: ['node_modules']
+exclude: ['node_modules', 'vendor']
